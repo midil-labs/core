@@ -7,6 +7,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+type ExtraConfig struct {
+	Extra interface{} `mapstructure:"extra"`
+}
+
 
 type Config struct {
 	Server            ServerConfig            `mapstructure:"server"`
@@ -27,6 +31,7 @@ type ServerConfig struct {
 	ReadTimeout    time.Duration `mapstructure:"read_timeout"`
 	WriteTimeout   time.Duration `mapstructure:"write_timeout"`
 	IdleTimeout    time.Duration `mapstructure:"idle_timeout"`
+	ExtraConfig
 }
 
 type Database struct {
@@ -35,12 +40,14 @@ type Database struct {
 	Port     int    `mapstructure:"port"`
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
+	ExtraConfig
 }
 
 type LoggingConfig struct {
 	Level string `mapstructure:"level"`
 	Format string `mapstructure:"format"`
 	OutputPath string `mapstructure:"output_path"`
+	ExtraConfig
 }
 
 type CacheConfig struct {
@@ -49,6 +56,7 @@ type CacheConfig struct {
 	Password string `mapstructure:"password"`
 	MinIdleConnections int `mapstructure:"min_idle_connections"`
 	PoolSize int    `mapstructure:"pool_size"`
+	ExtraConfig
 
 }
 
@@ -57,6 +65,7 @@ type ExternalService struct {
 	Port     int    `mapstructure:"port"`
 	Timeout  int    `mapstructure:"timeout"`
 	APIKey   string `mapstructure:"api_key"`
+	ExtraConfig
 }
 
 type ExternalServicesConfig struct {
@@ -76,6 +85,7 @@ type JWTConfig struct {
 	Secret string `mapstructure:"secret"`
 	TokenDuration time.Duration `mapstructure:"token_duration"`
 	Issuer string `mapstructure:"issuer"`
+	ExtraConfig
 }
 
 type CorsConfig struct {
@@ -85,6 +95,7 @@ type CorsConfig struct {
 	ExposedHeaders   []string `mapstructure:"exposed_headers"`
 	AllowCredentials bool     `mapstructure:"allow_credentials"`
 	MaxAge           int      `mapstructure:"max_age"`
+	ExtraConfig
 }
 
 
@@ -99,7 +110,7 @@ type AppConfig struct {
 	BaseURL string `mapstructure:"base_url"`
 	LogLevel string `mapstructure:"log_level"`
 	Description string `mapstructure:"description"`
-	Env string `mapstructure:"env"`
+	ExtraConfig
 }
 
 

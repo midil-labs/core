@@ -1,8 +1,8 @@
-package dtos
+// Following the JSON API specification, this file contains the structs that represent the response objects.
+// The JSON API specification is a standard for building APIs in JSON format. It defines the structure of the response objects and the relationships between them.
+// Visit https://jsonapi.org/format/#document-structure to learn more about the JSON API specification.
 
-type JSONAPI struct {
-	Version string `json:"version"`
-}
+package dtos
 
 type Links struct {
 	Self  string `json:"self,omitempty"`
@@ -44,7 +44,6 @@ type Relationship struct {
 }
 
 type SingleResourceResponse[T any] struct {
-	JSONAPI *JSONAPI        `json:"jsonapi,omitempty"`
 	Data    *Resource[T]    `json:"data,omitempty"`
 	Links   *Links          `json:"links,omitempty"`
 	Meta    *Meta           `json:"meta,omitempty"`
@@ -52,7 +51,6 @@ type SingleResourceResponse[T any] struct {
 }
 
 type MultipleResourcesResponse[T any] struct {
-	JSONAPI *JSONAPI        `json:"jsonapi,omitempty"`
 	Data    []Resource[T]    `json:"data,omitempty"`
 	Links   *Links           `json:"links,omitempty"`
 	Meta    *Meta            `json:"meta,omitempty"`
@@ -76,7 +74,6 @@ type ErrorSource struct {
 }
 
 type ErrorResponse struct {
-	JSONAPI *JSONAPI      `json:"jsonapi,omitempty"`
 	Errors  []ErrorObject `json:"errors"`
 	Meta    *Meta         `json:"meta,omitempty"`
 }
