@@ -11,18 +11,21 @@ import (
     "github.com/rs/zerolog"
     "github.com/rs/zerolog/pkgerrors"
     "gopkg.in/natefinch/lumberjack.v2"
+    "github.com/midil-labs/core/pkg/config"
+    "github.com/newrelic/go-agent/v3/newrelic"
+    "github.com/newrelic/go-agent/v3/integrations/logcontext-v2/zerologWriter"
 )
 
 var once sync.Once
 
 var log zerolog.Logger
 
-func Get() zerolog.Logger {
+func Get(config *config.LoggingConfig) zerolog.Logger {
     once.Do(func() {
         zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
         zerolog.TimeFieldFormat = time.RFC3339Nano
 
-        logLevel, err := strconv.Atoi(os.Getenv("LOG_LEVEL"))
+        logLevel, err := strconv.Atoi(config.Level)
         if err != nil {
             logLevel = int(zerolog.InfoLevel) // default to INFO
         }
@@ -32,16 +35,16 @@ func Get() zerolog.Logger {
             TimeFormat: time.RFC3339,
         }
 
-        if os.Getenv("APP_ENV") != "development" {
+        if config.Level != "development" {
             fileLogger := &lumberjack.Logger{
-                Filename:   "midil-labs.log",
+                Filename:   config.OutputPath,
                 MaxSize:    5, //
                 MaxBackups: 10,
                 MaxAge:     14,
                 Compress:   true,
             }
-
-            output = zerolog.MultiLevelWriter(os.Stderr, fileLogger)
+            nrWriter := zerologWriter.New(os.Stdout, newRelicApp)
+            output = zerolog.MultiLevelWriter(os.Stderr, fileLogger,)
         }
 
         var gitRevision string

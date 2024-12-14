@@ -35,3 +35,19 @@ func NotFound(message string, err error) *AppError {
 func InternalServerError(message string, err error) *AppError {
 	return NewAppError(http.StatusInternalServerError, message, err)
 }
+
+func Unauthorized(message string, err error) *AppError {
+	return NewAppError(http.StatusUnauthorized, message, err)
+}
+
+func Forbidden(message string, err error) *AppError {
+	return NewAppError(http.StatusForbidden, message, err)
+}
+
+func Conflict(message string, err error) *AppError {
+	return NewAppError(http.StatusConflict, message, err)
+}
+
+func UnprocessableEntity(message string, err error) *AppError {
+	return NewAppError(http.StatusUnprocessableEntity, message, err)
+}
