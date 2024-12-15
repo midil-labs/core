@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"time"
-
 	"github.com/spf13/viper"
 )
 
@@ -114,13 +113,28 @@ type AppConfig struct {
 }
 
 
-func  LoadConfig(path string) (*Config, error) {
-	viper.SetConfigName("config")
+func  LoadConfig(configName, path, envPrefix string) (*Config, error) {
+	if envPrefix != "" {
+		viper.SetEnvPrefix(envPrefix)
+	}else {
+		viper.SetEnvPrefix(".env")
+	}
+
+	if path != "" {
+		viper.AddConfigPath(path)
+	}else {
+		viper.AddConfigPath(".")
+	}
+
+	if configName != "" {
+		viper.SetConfigName(configName)
+	}else {
+		viper.SetConfigName("config")
+	}
+
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(path)
 	viper.AddConfigPath(".")
 
-	viper.SetEnvPrefix(".env")
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {

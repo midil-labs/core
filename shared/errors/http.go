@@ -1,7 +1,9 @@
 package errors
 
 import ("fmt"
-		"net/http")
+		"net/http"
+	    "github.com/midil-labs/core/shared/dtos/response"
+		"strings")
 
 type AppError struct {
 	Code    int    `json:"code"`
@@ -16,7 +18,7 @@ func (e *AppError) Error() string {
 	return fmt.Sprintf("%d - %s", e.Code, e.Message)
 }
 
-func NewAppError(code int, message string, err error) *AppError {
+func NewAppError(code int, message string, err error, ) *AppError {
 	return &AppError{
 		Code:    code,
 		Message: message,
@@ -24,8 +26,16 @@ func NewAppError(code int, message string, err error) *AppError {
 	}
 }
 
-func BadRequest(message string, err error) *AppError {
-	return NewAppError(http.StatusBadRequest, message, err)
+
+func BadRequest(detail string, err error) *response.ErrorResponse {
+	errorObject := response.ErrorObject{
+		Code:   fmt.Sprintf("%d", http.StatusBadRequest),
+		Title:  http.StatusText(http.StatusBadRequest),
+		Detail: detail,
+	}
+	errors := []response.ErrorObject{errorObject}
+	
+	return response.NewErrorResponse(errors)
 }
 
 func NotFound(message string, err error) *AppError {
