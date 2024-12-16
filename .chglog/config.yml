@@ -16,11 +16,12 @@ options:
     title_maps:
       features: Features
       feat: Features
+      added: Features
       fix: Bug Fixes
       improvement: Improvements
       perf: Improvements
       refactor: Improvements
-
+      
   header:
     pattern: "^(\\w*)(?:\\(([\\w\\$\\.\\-\\* ]*)\\))?\\: (.*)$"
     pattern_maps:

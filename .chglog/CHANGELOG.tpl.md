@@ -1,4 +1,4 @@
-# Changelog
+# {{ .Info.Title }}
 
 All notable changes to this project will be documented in this file.
 
@@ -10,12 +10,23 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 {{ range .Versions }}
 ## {{ .Tag.Name }} ({{ .Tag.Date.Format "2006-01-02" }})
 
+{{ if .Tag.Subject }}
+{{ .Tag.Subject }}
+{{ end }}
+
 {{ range .CommitGroups -}}
 ### {{ .Title }}
 
 {{ range .Commits -}}
 - {{ .Subject }}
 {{ end }}
-{{ end -}}
+{{ end }}
 
-{{ end -}}
+{{ range .NoteGroups -}}
+### {{ .Title }}
+
+{{ range .Notes }}
+- {{ .Body }}
+{{ end }}
+{{ end }}
+{{ end }}
