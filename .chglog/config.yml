@@ -2,8 +2,7 @@ style: github
 template: CHANGELOG.tpl.md
 info:
   title: Changelog
-  repository_url: https://github.com/your-repo
-
+  repository_url: https://github.com/midil-labs/core
 options:
   commit_groups:
     title_maps:
