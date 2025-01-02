@@ -9,48 +9,59 @@ import (
 	"encoding/json"
 	"strings"
 	"github.com/midil-labs/core/shared/dtos"
+	jsonApiError "github.com/midil-labs/core/shared/dtos/error"
 )
 
 
-type PaginationLinks struct {
-	Self  string `json:"self,omitempty"`
-	First string `json:"first,omitempty"`
-	Last  string `json:"last,omitempty"`
-	Prev  string `json:"prev,omitempty"`
-	Next  string `json:"next,omitempty"`
+func NewResource[T dtos.DTOInterface](id string, resourceType string, attributes T, opts ...ResourceOption[T]) *Resource[T] {
+	r := &Resource[T]{
+		ResourceIdentifier: ResourceIdentifier{
+			ID:   id,
+			Type: resourceType,
+		},
+		Attributes:    attributes,
+		Relationships: make(map[string]Relationship),
+		Meta:         make(map[string]any),
+	}
+
+	for _, opt := range opts {
+		opt(r)
+	}
+	return r
 }
 
 
-type Meta struct {
-	Pagination Pagination `json:"pagination,omitempty"`
+func NewSingleResourceResponse[T dtos.DTOInterface](opts ...ResponseOption[T]) *SingleResourceResponse[T] {
+    builder := &ResourceResponse[T]{}
+    for _, opt := range opts {
+        opt(builder)
+    }
+
+    return &SingleResourceResponse[T]{
+        Data:     builder.resource,
+        Meta:     builder.Meta,
+        Included: builder.Included,
+    }
 }
 
+func NewMultipleResourcesResponse[T dtos.DTOInterface](opts ...ResponseOption[T]) *MultipleResourcesResponse[T] {
+    builder := &ResourceResponse[T]{}
+    for _, opt := range opts {
+        opt(builder)
+    }
 
-type Pagination struct {
-	CurrentPage int64 `json:"current_page"`
-	PrevPage int64 `json:"prev_page"`
-	NextPage int64 `json:"next_page"`
-	TotalPages int64 `json:"total_pages"`
-	TotalCount int64 `json:"total_count"`
+    if builder.resources == nil {
+        builder.resources = []Resource[T]{}
+    }
+
+    return &MultipleResourcesResponse[T]{
+        Data:     builder.resources,
+        Links:    builder.Links,
+        Meta:     builder.Meta,
+        Included: builder.Included,
+    }
 }
 
-
-type RelatedLink struct {
-	Href        string            `json:"href,omitempty"`
-	Title       string            `json:"title,omitempty"`
-	DescribedBy string            `json:"describedby,omitempty"`
-	Meta        map[string]interface{} `json:"meta,omitempty"`
-}
-
-type Links struct {
-	Self    string      `json:"self,omitempty"`
-	Related *RelatedLink `json:"related,omitempty"`
-}
-
-type ResourceIdentifier struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-}
 
 func (r ResourceIdentifier) Validate() error {
 	if strings.TrimSpace(r.ID) == "" {
@@ -60,15 +71,6 @@ func (r ResourceIdentifier) Validate() error {
 		return fmt.Errorf("resource type cannot be empty")
 	}
 	return nil
-}
-
-
-type Resource[T dtos.DTOInterface] struct {
-	ResourceIdentifier
-	Attributes    T                      `json:"attributes,omitempty"`
-	Relationships map[string]Relationship `json:"relationships,omitempty"`
-	Links         *Links                 `json:"links,omitempty"`
-	Meta          map[string]any         `json:"meta,omitempty"`
 }
 
 
@@ -93,11 +95,6 @@ func (r Resource[T]) Validate() error {
 }
 
 
-type RelationshipData struct {
-	Resource   *ResourceIdentifier
-	Resources []ResourceIdentifier
-}
-
 func (c *RelationshipData) UnmarshalJSON(b []byte) error {
 	var resource ResourceIdentifier
 	if err := json.Unmarshal(b, &resource); err == nil && resource.ID != "" {
@@ -114,12 +111,14 @@ func (c *RelationshipData) UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("data field is neither a resource object nor a valid array of objects")
 }
 
+
 func (c RelationshipData) MarshalJSON() ([]byte, error) {
 	if c.Resource != nil {
 		return json.Marshal(c.Resource)
 	}
 	return json.Marshal(c.Resources)
 }
+
 
 func (r RelationshipData) Validate() error {
 	if r.Resource != nil {
@@ -134,55 +133,25 @@ func (r RelationshipData) Validate() error {
 }
 
 
-type Relationship struct {
-	Data  RelationshipData `json:"data"`
-	Links *Links            `json:"links,omitempty"`
-	Meta  map[string]interface{}    `json:"meta,omitempty"`
-}
-
 func (r Relationship) Validate() error {
 	return r.Data.Validate()
-}
-
-type SingleResourceResponse[T dtos.DTOInterface] struct {
-	Data    *Resource[T]    `json:"data,omitempty"`
-	Meta    *Meta           `json:"meta,omitempty"`
-	Included []Resource[dtos.DTOInterface] `json:"included,omitempty"`
-}
-
-
-type MultipleResourcesResponse[T dtos.DTOInterface] struct {
-	Data    []Resource[T]    `json:"data,omitempty"`
-	Links   *PaginationLinks `json:"links,omitempty"`
-	Meta    *Meta            `json:"meta,omitempty"`
-	Included []Resource[dtos.DTOInterface] `json:"included,omitempty"`
-}
-
-type ResourceResponse[T dtos.DTOInterface] struct {
-	resource   *Resource[T] 
-	resources []Resource[T]
-	Links    *Links     `json:"links,omitempty"`
-	Meta     *Meta      `json:"meta,omitempty"`
-	Included []any      `json:"included,omitempty"`
 }
 
 func (r *ResourceResponse[T]) UnmarshalJSON(data []byte) error {
 	var singleResponse struct {
 		Data *Resource[T] `json:"data"`
-		Links *Links      `json:"links,omitempty"`
-		Meta  *Meta       `json:"meta,omitempty"`
+		Meta  NonStandardMeta       `json:"meta,omitempty"`
 	}
 	if err := json.Unmarshal(data, &singleResponse); err == nil && singleResponse.Data != nil {
 		r.resource = singleResponse.Data
-		r.Links = singleResponse.Links
 		r.Meta = singleResponse.Meta
 		return nil
 	}
 
 	var multiResponse struct {
 		Data []Resource[T] `json:"data"`
-		Links *Links       `json:"links,omitempty"`
-		Meta  *Meta        `json:"meta,omitempty"`
+		Links *PaginationLinks       `json:"links,omitempty"`
+		Meta  NonStandardMeta        `json:"meta,omitempty"`
 	}
 	if err := json.Unmarshal(data, &multiResponse); err == nil {
 		r.resources = multiResponse.Data
@@ -237,43 +206,55 @@ func (r ResourceResponse[T]) Validate() error {
 	return nil
 }
 
-type ErrorSource struct {
-	Pointer   string `json:"pointer,omitempty"`
-	Parameter string `json:"parameter,omitempty"`
-}
 
-type ErrorObject struct {
-	Status string            `json:"status,omitempty"`
-	Title  string            `json:"title,omitempty"`
-	Detail string            `json:"detail,omitempty"`
-	Source *ErrorSource      `json:"source,omitempty"`
-}
-
-
-func (e ErrorObject) Validate() error {
-	if strings.TrimSpace(e.Status) == "" {
-		return fmt.Errorf("error status cannot be empty")
-	}
-	if strings.TrimSpace(e.Title) == "" {
-		return fmt.Errorf("error title cannot be empty")
+func (r *ErrorResponse) Validate() error {
+	if len(r.Errors) == 0 {
+		return fmt.Errorf("errors array cannot be empty")
 	}
 	return nil
 }
 
-
-type ErrorResponse struct {
-	Errors  []ErrorObject `json:"errors"`
+func (v *ErrorResponse) Add(status int, code, title, detail string, opts ...jsonApiError.Option) *ErrorResponse {
+	err := jsonApiError.New(status, code, title, detail, opts...)
+	v.Errors = append(v.Errors, *err)
+	return v
 }
 
-func (e ErrorResponse) Validate() error {
-	if len(e.Errors) == 0 {
-		return fmt.Errorf("errors cannot be empty")
+
+func (r *ErrorResponse) MarshalJSON() ([]byte, error) {
+	if err := r.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid error response: %w", err)
 	}
-	for i, errObj := range e.Errors {
-		if err := errObj.Validate(); err != nil {
-			return fmt.Errorf("error object at index %d validation failed: %v", i, err)
+	type Alias ErrorResponse
+	return json.Marshal((*Alias)(r))
+}
+
+func (r *ErrorResponse) UnmarshalJSON(data []byte) error {
+	type Alias ErrorResponse
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(r),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	return r.Validate()
+}
+
+func NewErrorResponse(meta map[string]interface{}, errs ...jsonApiError.ErrorObject) *ErrorResponse {
+	return &ErrorResponse{
+		Errors: errs,
+		Meta: meta,
+	}
+}
+
+func (r *ErrorResponse) FilterByCodePrefix(prefix string) []jsonApiError.ErrorObject {
+	var filtered []jsonApiError.ErrorObject
+	for _, err := range r.Errors {
+		if strings.HasPrefix(string(err.Code), prefix) {
+			filtered = append(filtered, err)
 		}
 	}
-	return nil
+	return filtered
 }
-

@@ -1,63 +1,89 @@
 package errors
 
-import ("fmt"
-		"net/http"
-	    "github.com/midil-labs/core/shared/dtos/response"
-		"strings")
+import (
+	"net/http"
+	"encoding/json"
+	jsonApi "github.com/midil-labs/core/shared/dtos/response"
+)
 
-type AppError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Err     error  `json:"-"`
+// ResponseWriter is a type alias for a function that takes an http.ResponseWriter
+// and returns an error. It is used to define a function signature for handling
+// HTTP responses.
+type ResponseWriter = func(w http.ResponseWriter) error
+
+
+// The provided code must be a valid HTTP 2xx status code.
+func Success(w http.ResponseWriter, statusCode int, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(response)
+	return nil
 }
 
-func (e *AppError) Error() string {
-	if e.Err != nil {
-		return fmt.Sprintf("%d - %s: %v", e.Code, e.Message, e.Err)
+// The provided status code must be a valid HTTP 4xx-5xx status code.
+func Error(w http.ResponseWriter, statusCode int, response jsonApi.ErrorResponse) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(response)
+	return nil
+}
+
+func NotFound(response jsonApi.ErrorResponse) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Error(w, http.StatusNotFound, response)
 	}
-	return fmt.Sprintf("%d - %s", e.Code, e.Message)
 }
 
-func NewAppError(code int, message string, err error, ) *AppError {
-	return &AppError{
-		Code:    code,
-		Message: message,
-		Err:     err,
+func InternalServerError(response jsonApi.ErrorResponse) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Error(w, http.StatusInternalServerError, response)
 	}
 }
 
-
-func BadRequest(detail string, err error) *response.ErrorResponse {
-	errorObject := response.ErrorObject{
-		Code:   fmt.Sprintf("%d", http.StatusBadRequest),
-		Title:  http.StatusText(http.StatusBadRequest),
-		Detail: detail,
+func Unauthorized(response jsonApi.ErrorResponse) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Error(w, http.StatusUnauthorized, response)
 	}
-	errors := []response.ErrorObject{errorObject}
-	
-	return response.NewErrorResponse(errors)
 }
 
-func NotFound(message string, err error) *AppError {
-	return NewAppError(http.StatusNotFound, message, err)
+func Forbidden(response jsonApi.ErrorResponse) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Error(w, http.StatusForbidden, response)
+	}
 }
 
-func InternalServerError(message string, err error) *AppError {
-	return NewAppError(http.StatusInternalServerError, message, err)
+func Conflict(response jsonApi.ErrorResponse) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Error(w, http.StatusConflict, response)
+	}
 }
 
-func Unauthorized(message string, err error) *AppError {
-	return NewAppError(http.StatusUnauthorized, message, err)
+func UnprocessableEntity(response jsonApi.ErrorResponse) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Error(w, http.StatusUnprocessableEntity, response)
+	}
 }
 
-func Forbidden(message string, err error) *AppError {
-	return NewAppError(http.StatusForbidden, message, err)
+func BadRequest(response jsonApi.ErrorResponse) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Error(w, http.StatusBadRequest, response)
+	}
 }
 
-func Conflict(message string, err error) *AppError {
-	return NewAppError(http.StatusConflict, message, err)
+func OK(response interface{}) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Success(w, http.StatusOK, response)
+	}
 }
 
-func UnprocessableEntity(message string, err error) *AppError {
-	return NewAppError(http.StatusUnprocessableEntity, message, err)
+func Created(response interface{}) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Success(w, http.StatusCreated, response)
+	}
+}
+
+func Accepted(response interface{}) ResponseWriter {
+	return func(w http.ResponseWriter) error {
+		return Success(w, http.StatusAccepted, response)
+	}
 }

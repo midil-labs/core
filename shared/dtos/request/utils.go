@@ -1,36 +1,13 @@
-package response
+package request
 
 import (
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 )
 
-
-type Filter struct {
-	Fields map[string][]string
-}
-
-type Sort struct {
-	Fields []string
-}
-
-type PaginationQuery struct {
-	PageSize   int
-	PageNumber int
-}
-
-type Fields map[string][]string
-
-type Include []string
-
-type QueryParams struct {
-	Filter     Filter
-	Sort       Sort
-	Page       PaginationQuery
-	Fields     Fields
-	Include    Include
-}
+const QueryParamsKey string = "queryParams"
 
 
 func ParseFilter(values url.Values) Filter {
@@ -49,7 +26,8 @@ func ParseFilter(values url.Values) Filter {
 }
 
 
-func ParseSort(sortParam string) Sort {
+func ParseSort(values url.Values) Sort {
+	sortParam := values.Get("sort")
 	sort := Sort{}
 	if sortParam == "" {
 		return sort
@@ -88,7 +66,9 @@ func ParsePagination(values url.Values) PaginationQuery {
 }
 
 
-func ParseFields(includeParam string) Fields {
+func ParseFields(values url.Values) Fields {
+	includeParam:= values.Get("fields")
+
 	fields := make(Fields)
 	if includeParam == "" {
 		return fields
@@ -114,7 +94,9 @@ func ParseFields(includeParam string) Fields {
 	return fields
 }
 
-func ParseInclude(includeParam string) Include {
+func ParseInclude(values url.Values) Include {
+	includeParam := values.Get("include")
+
 	if includeParam == "" {
 		return Include{}
 	}
@@ -129,9 +111,25 @@ func ParseInclude(includeParam string) Include {
 func ParseQueryParams(values url.Values) QueryParams {
 	return QueryParams{
 		Filter:     ParseFilter(values),
-		Sort:       ParseSort(values.Get("sort")),
+		Sort:       ParseSort(values),
 		Page: 		ParsePagination(values),
-		Fields:     ParseFields(values.Get("fields")),
-		Include:    ParseInclude(values.Get("include")),
+		Fields:     ParseFields(values),
+		Include:    ParseInclude(values),
 	}
+}
+
+
+func GetQueryParams(r *http.Request) (QueryParams, bool) {
+    queryParams, ok := r.Context().Value(QueryParamsKey).(QueryParams)
+    return queryParams, ok
+}
+
+
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
