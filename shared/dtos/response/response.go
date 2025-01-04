@@ -9,12 +9,12 @@ import (
 	"encoding/json"
 	"strings"
 	"github.com/midil-labs/core/shared/dtos"
-	jsonApiError "github.com/midil-labs/core/shared/dtos/error"
+	jsonAPIError "github.com/midil-labs/core/shared/dtos/error"
 )
 
 
-func NewResource[T dtos.DTOInterface](id string, resourceType string, attributes T, opts ...ResourceOption[T]) *Resource[T] {
-	r := &Resource[T]{
+func NewResource(id string, resourceType string, attributes any, opts ...ResourceOption) *Resource {
+	r := &Resource{
 		ResourceIdentifier: ResourceIdentifier{
 			ID:   id,
 			Type: resourceType,
@@ -31,35 +31,12 @@ func NewResource[T dtos.DTOInterface](id string, resourceType string, attributes
 }
 
 
-func NewSingleResourceResponse[T dtos.DTOInterface](opts ...ResponseOption[T]) *SingleResourceResponse[T] {
-    builder := &ResourceResponse[T]{}
-    for _, opt := range opts {
-        opt(builder)
-    }
-
-    return &SingleResourceResponse[T]{
-        Data:     builder.resource,
-        Meta:     builder.Meta,
-        Included: builder.Included,
-    }
-}
-
-func NewMultipleResourcesResponse[T dtos.DTOInterface](opts ...ResponseOption[T]) *MultipleResourcesResponse[T] {
-    builder := &ResourceResponse[T]{}
-    for _, opt := range opts {
-        opt(builder)
-    }
-
-    if builder.resources == nil {
-        builder.resources = []Resource[T]{}
-    }
-
-    return &MultipleResourcesResponse[T]{
-        Data:     builder.resources,
-        Links:    builder.Links,
-        Meta:     builder.Meta,
-        Included: builder.Included,
-    }
+func NewJsonAPIResponse(data Data, opts ...ResponseOption) *JSONAPIResponse {
+	builder := &JSONAPIResponse{Data: data}
+	for _, opt := range opts {
+		opt(builder)
+	}
+	return builder
 }
 
 
@@ -74,7 +51,7 @@ func (r ResourceIdentifier) Validate() error {
 }
 
 
-func (r Resource[T]) Validate() error {
+func (r Resource) Validate() error {
 	if err := r.ResourceIdentifier.Validate(); err != nil {
 		return err
 	}
@@ -137,24 +114,24 @@ func (r Relationship) Validate() error {
 	return r.Data.Validate()
 }
 
-func (r *ResourceResponse[T]) UnmarshalJSON(data []byte) error {
+func (r *JSONAPIResponse) UnmarshalJSON(data []byte) error {
 	var singleResponse struct {
-		Data *Resource[T] `json:"data"`
+		Data *Resource `json:"data"`
 		Meta  NonStandardMeta       `json:"meta,omitempty"`
 	}
 	if err := json.Unmarshal(data, &singleResponse); err == nil && singleResponse.Data != nil {
-		r.resource = singleResponse.Data
+		r.Data.resource = singleResponse.Data
 		r.Meta = singleResponse.Meta
 		return nil
 	}
 
 	var multiResponse struct {
-		Data []Resource[T] `json:"data"`
+		Data []Resource `json:"data"`
 		Links *PaginationLinks       `json:"links,omitempty"`
 		Meta  NonStandardMeta        `json:"meta,omitempty"`
 	}
 	if err := json.Unmarshal(data, &multiResponse); err == nil {
-		r.resources = multiResponse.Data
+		r.Data.resources = multiResponse.Data
 		r.Links = multiResponse.Links
 		r.Meta = multiResponse.Meta
 		return nil
@@ -164,13 +141,13 @@ func (r *ResourceResponse[T]) UnmarshalJSON(data []byte) error {
 }
 
 
-func (r ResourceResponse[T]) MarshalJSON() ([]byte, error) {
+func (r JSONAPIResponse) MarshalJSON() ([]byte, error) {
 	response := make(map[string]interface{})
 
-	if r.resource != nil {
-		response["data"] = r.resource
-	} else if len(r.resources) > 0 {
-		response["data"] = r.resources
+	if r.Data.resource != nil {
+		response["data"] = r.Data.resource
+	} else if len(r.Data.resources) > 0 {
+		response["data"] = r.Data.resources
 	}
 
 	if r.Links != nil {
@@ -186,18 +163,18 @@ func (r ResourceResponse[T]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(response)
 }
 
-func (r ResourceResponse[T]) Validate() error {
-	if r.resource != nil {
+func (r JSONAPIResponse) Validate() error {
+	if r.Data.resource != nil {
 		if r.Links != nil {
 			return fmt.Errorf("single resource response cannot have pagination links")
 		}
 
-		if err := r.resource.Validate(); err != nil {
+		if err := r.Data.resource.Validate(); err != nil {
 			return fmt.Errorf("single resource validation failed: %v", err)
 		}
 	}
 
-	for i, res := range r.resources {
+	for i, res := range r.Data.resources {
 		if err := res.Validate(); err != nil {
 			return fmt.Errorf("resource at index %d validation failed: %v", i, err)
 		}
@@ -214,8 +191,8 @@ func (r *ErrorResponse) Validate() error {
 	return nil
 }
 
-func (v *ErrorResponse) Add(status int, code, title, detail string, opts ...jsonApiError.Option) *ErrorResponse {
-	err := jsonApiError.New(status, code, title, detail, opts...)
+func (v *ErrorResponse) Add(status int, code, title, detail string, opts ...jsonAPIError.Option) *ErrorResponse {
+	err := jsonAPIError.New(status, code, title, detail, opts...)
 	v.Errors = append(v.Errors, *err)
 	return v
 }
@@ -242,15 +219,15 @@ func (r *ErrorResponse) UnmarshalJSON(data []byte) error {
 	return r.Validate()
 }
 
-func NewErrorResponse(meta map[string]interface{}, errs ...jsonApiError.ErrorObject) *ErrorResponse {
+func NewErrorResponse(meta map[string]interface{}, errs ...jsonAPIError.ErrorObject) *ErrorResponse {
 	return &ErrorResponse{
 		Errors: errs,
 		Meta: meta,
 	}
 }
 
-func (r *ErrorResponse) FilterByCodePrefix(prefix string) []jsonApiError.ErrorObject {
-	var filtered []jsonApiError.ErrorObject
+func (r *ErrorResponse) FilterByCodePrefix(prefix string) []jsonAPIError.ErrorObject {
+	var filtered []jsonAPIError.ErrorObject
 	for _, err := range r.Errors {
 		if strings.HasPrefix(string(err.Code), prefix) {
 			filtered = append(filtered, err)
@@ -258,3 +235,4 @@ func (r *ErrorResponse) FilterByCodePrefix(prefix string) []jsonApiError.ErrorOb
 	}
 	return filtered
 }
+

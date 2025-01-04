@@ -9,7 +9,6 @@ import (
 
 const QueryParamsKey string = "queryParams"
 
-
 func ParseFilter(values url.Values) Filter {
 	filter := Filter{
 		Fields: make(map[string][]string),
@@ -24,7 +23,6 @@ func ParseFilter(values url.Values) Filter {
 
 	return filter
 }
-
 
 func ParseSort(values url.Values) Sort {
 	sortParam := values.Get("sort")
@@ -43,11 +41,10 @@ func ParseSort(values url.Values) Sort {
 	return sort
 }
 
-
 func ParsePagination(values url.Values) PaginationQuery {
 	pagination := PaginationQuery{
 		PageSize:   100, // default page size
-		PageNumber: 1,  // default page number
+		PageNumber: 1,   // default page number
 	}
 
 	if pageSizeStr := values.Get("page[size]"); pageSizeStr != "" {
@@ -65,9 +62,8 @@ func ParsePagination(values url.Values) PaginationQuery {
 	return pagination
 }
 
-
 func ParseFields(values url.Values) Fields {
-	includeParam:= values.Get("fields")
+	includeParam := values.Get("fields")
 
 	fields := make(Fields)
 	if includeParam == "" {
@@ -110,26 +106,15 @@ func ParseInclude(values url.Values) Include {
 
 func ParseQueryParams(values url.Values) QueryParams {
 	return QueryParams{
-		Filter:     ParseFilter(values),
-		Sort:       ParseSort(values),
-		Page: 		ParsePagination(values),
-		Fields:     ParseFields(values),
-		Include:    ParseInclude(values),
+		Filter:  ParseFilter(values),
+		Sort:    ParseSort(values),
+		Page:    ParsePagination(values),
+		Fields:  ParseFields(values),
+		Include: ParseInclude(values),
 	}
 }
-
 
 func GetQueryParams(r *http.Request) (QueryParams, bool) {
-    queryParams, ok := r.Context().Value(QueryParamsKey).(QueryParams)
-    return queryParams, ok
-}
-
-
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+	queryParams, ok := r.Context().Value(QueryParamsKey).(QueryParams)
+	return queryParams, ok
 }

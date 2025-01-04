@@ -1,11 +1,11 @@
 package response
 
 import (
-	"github.com/midil-labs/core/shared/dtos"
-	jsonApiError "github.com/midil-labs/core/shared/dtos/error"
+	error "github.com/midil-labs/core/shared/dtos/error"
+	"github.com/midil-labs/core/shared/dtos/common"
 )
 
-
+// PaginationLinks is a map of pagination links for the response. The keys are the link relation type.
 type PaginationLinks struct {
 	Self  string `json:"self,omitempty"`
 	First string `json:"first,omitempty"`
@@ -14,7 +14,6 @@ type PaginationLinks struct {
 	Next  string `json:"next,omitempty"`
 }
 
-type NonStandardMeta map[string]interface{}
 
 type Pagination struct {
 	CurrentPage int64 		`json:"current_page"`
@@ -24,29 +23,24 @@ type Pagination struct {
 	TotalCount int64 		`json:"total_count"`
 }
 
-type RelatedLink struct {
-	Href        string            `json:"href,omitempty"`
-	Title       string            `json:"title,omitempty"`
-	DescribedBy string            `json:"describedby,omitempty"`
-	Meta        NonStandardMeta   `json:"meta,omitempty"`
-}
-
-type Links struct {
-	Self    string      		`json:"self,omitempty"`
-	Related *RelatedLink 		`json:"related,omitempty"`
-}
-
+// ResourceIdentifier is a JSON:API resource identifier object. It contains the resource ID and type.
 type ResourceIdentifier struct {
 	ID   string `json:"id"`
 	Type string `json:"type"`
 }
 
-type Resource[T dtos.DTOInterface] struct {
-	ResourceIdentifier
-	Attributes    T                      		`json:"attributes,omitempty"`
+
+//Resource is a JSON:API resource object. It contains the resource identifier, attributes, relationships, links, and meta-information.
+//The attributes field is an interface{} type to allow for any type of data to be passed in. 
+//The relationships field is a map of relationship objects.
+//The links field is a map of links objects. 
+//The meta field is a map of non-standard meta-information.
+type Resource struct {
+	common.ResourceIdentifier
+	Attributes    interface{}                   `json:"attributes,omitempty"`
 	Relationships map[string]Relationship 		`json:"relationships,omitempty"`
-	Links         *Links                 		`json:"links,omitempty"`
-	Meta          NonStandardMeta        		`json:"meta,omitempty"`
+	Links         *common.Links                 		`json:"links,omitempty"`
+	Meta          common.NonStandardMeta        		`json:"meta,omitempty"`
 }
 
 type RelationshipData struct {
@@ -56,38 +50,32 @@ type RelationshipData struct {
 
 
 type Relationship struct {
-	Data  RelationshipData 		`json:"data"`
-	Links *Links            	`json:"links,omitempty"`
-	Meta  NonStandardMeta    	`json:"meta,omitempty"`
+	Data  RelationshipData 			`json:"data"`
+	Links *common.Links            	`json:"links,omitempty"`
+	Meta  common.NonStandardMeta    `json:"meta,omitempty"`
 }
 
-type SingleResourceResponse[T dtos.DTOInterface] struct {
-	Data    *Resource[T]    					`json:"data,omitempty"`
-	Meta    NonStandardMeta           			`json:"meta,omitempty"`
-	Included []Resource[dtos.DTOInterface] 		`json:"included,omitempty"`
+// Data is a JSON:API data object. It contains either a single resource object or an array of resource objects.
+type Data struct {
+	resource   *Resource 
+	resources []Resource
 }
 
-
-type MultipleResourcesResponse[T dtos.DTOInterface] struct {
-	Data    []Resource[T]   						`json:"data,omitempty"`
-	Links   *PaginationLinks 						`json:"links,omitempty"`
-	Meta    NonStandardMeta            			    `json:"meta,omitempty"`
-	Included []Resource[dtos.DTOInterface] 			`json:"included,omitempty"`
-}
-
-
-type ResourceResponse[T dtos.DTOInterface] struct {
-	resource   *Resource[T] 
-	resources []Resource[T]
-	Links    *PaginationLinks     		   `json:"links,omitempty"`
-	Meta     NonStandardMeta      		   `json:"meta,omitempty"`
-	Included []Resource[dtos.DTOInterface] `json:"included,omitempty"`
-}
 
 type ErrorResponse struct {
-	Errors []jsonApiError.ErrorObject   `json:"errors" validate:"required"`
-	Meta   NonStandardMeta 				`json:"meta,omitempty"`
+	Errors []error.ErrorObject   			`json:"errors" validate:"required"`
+	Meta   common.NonStandardMeta 			`json:"meta,omitempty"`
 }
 
 
+// JSONAPIResponse is a generic JSON:API response object. It contains the data, errors, meta-information, pagination links, and included resources.
+type JSONAPIResponse struct {
+	Data   		Data               				`json:"data"`
+	Errors 		[]error.ErrorObject   			`json:"errors,omitempty"`
+	Meta    	common.NonStandardMeta      	`json:"meta,omitempty"`
+	Links   	*PaginationLinks     			`json:"links,omitempty"`
+	Included 	[]Resource 						`json:"included,omitempty"`
+}
 
+
+type JsonAPIResponseType = JSONAPIResponse

@@ -143,35 +143,3 @@ func (q QueryParams) Validate(config QueryParams) []jsonApiError.ErrorObject {
 
     return errObjects
 }
-
-
-// Usage
-
-// config := QueryParams{
-// 	Filter: Filter{
-// 		Fields: map[string]bool{
-// 			"name": true,
-// 			"age":  true,
-// 		},
-// 	},
-// 	Sort: Sort{
-// 		Fields: map[string]bool{
-// 			"name": true,
-// 			"age":  true,
-// 		},
-// 	},
-// 	Pagination: PaginationQuery{
-// 		PageSize:  100,
-// 		PageNumber: 1,
-// 	},
-// 	Fields: Fields{
-// 		"users": []string{"name", "age", "email"},
-// 	},
-// 	Include: Include{
-// 		"address": true,
-// 		"profile": true,
-// 	},
-// }
-
-// qp := ParseQueryParams(r.URL.Query())
-// errors := qp.Validate(config)

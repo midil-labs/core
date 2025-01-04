@@ -1,13 +1,13 @@
 package response
 
-import "github.com/midil-labs/core/shared/dtos"
+import "github.com/midil-labs/core/shared/dtos/common"
 
-type ResourceOption[T dtos.DTOInterface] func(*Resource[T])
-type ResponseOption[T dtos.DTOInterface] func(*ResourceResponse[T])
+type ResourceOption = common.Option[Resource]
+type ResponseOption  = common.Option[JSONAPIResponse]
 
 
-func WithToOneRelationship[T dtos.DTOInterface](name, relType, relID string, links *Links, meta NonStandardMeta) ResourceOption[T] {
-    return func(r *Resource[T]) {
+func WithToOneRelationship(name, relType, relID string, links *common.Links, meta common.NonStandardMeta) ResourceOption {
+    return func(r *Resource) {
         if r.Relationships == nil {
             r.Relationships = make(map[string]Relationship)
         }
@@ -24,8 +24,8 @@ func WithToOneRelationship[T dtos.DTOInterface](name, relType, relID string, lin
     }
 }
 
-func WithToManyRelationship[T dtos.DTOInterface](name string, resources []ResourceIdentifier, links *Links, meta NonStandardMeta) ResourceOption[T] {
-    return func(r *Resource[T]) {
+func WithToManyRelationship(name string, resources []ResourceIdentifier, links *common.Links, meta common.NonStandardMeta) ResourceOption {
+    return func(r *Resource) {
         if r.Relationships == nil {
             r.Relationships = make(map[string]Relationship)
         }
@@ -39,41 +39,40 @@ func WithToManyRelationship[T dtos.DTOInterface](name string, resources []Resour
     }
 }
 
-
-func WithRelationships[T dtos.DTOInterface](relationships map[string]Relationship) ResourceOption[T] {
-	return func(r *Resource[T]) {
+func WithRelationships(relationships map[string]Relationship) ResourceOption {
+	return func(r *Resource) {
 		r.Relationships = relationships
 	}
 }
 
 
-func WithLinks[T dtos.DTOInterface](self string, related *RelatedLink) ResourceOption[T] {
-	return func(r *Resource[T]) {
+func WithLinks(self string, related *common.RelatedLink) ResourceOption {
+	return func(r *Resource) {
 		if r.Links == nil {
-			r.Links = &Links{}
+			r.Links = &common.Links{}
 		}
 		r.Links.Self = self
 		r.Links.Related = related
 	}
 }
 
-func WithIncluded[T dtos.DTOInterface](included []Resource[dtos.DTOInterface]) ResponseOption[T] {
-	return func(rr *ResourceResponse[T]) {
+func WithIncluded(included []Resource) ResponseOption {
+	return func(rr *JSONAPIResponse) {
 		rr.Included = included
 	}
 }
 
 
-func WithMeta[T dtos.DTOInterface](meta map[string]any) ResourceOption[T] {
-	return func(r *Resource[T]) {
+func WithMeta(meta map[string]any) ResourceOption {
+	return func(r *Resource) {
 		r.Meta = meta
 	}
 }
 
-func WithPagination[T dtos.DTOInterface](currentPage, prevPage, nextPage, totalPages, totalCount int64) ResponseOption[T] {
-    return func(rr *ResourceResponse[T]) {
+func WithPagination(currentPage, prevPage, nextPage, totalPages, totalCount int64) ResponseOption {
+    return func(rr *JSONAPIResponse) {
         if rr.Meta == nil {
-            rr.Meta = NonStandardMeta{}
+            rr.Meta = common.NonStandardMeta{}
         }
         rr.Meta["Pagination"] = Pagination{
             CurrentPage: currentPage,
@@ -86,8 +85,8 @@ func WithPagination[T dtos.DTOInterface](currentPage, prevPage, nextPage, totalP
 }
 
 
-func WithPaginationLinks[T dtos.DTOInterface](self, first, last, prev, next string) ResponseOption[T] {
-	return func(r *ResourceResponse[T]) {
+func WithPaginationLinks(self, first, last, prev, next string) ResponseOption {
+	return func(r *JSONAPIResponse) {
 		if r.Links == nil {
 			r.Links = &PaginationLinks{}
 		}
@@ -100,13 +99,18 @@ func WithPaginationLinks[T dtos.DTOInterface](self, first, last, prev, next stri
 }
 
 
+func WithIncludedResources(resources []Resource) ResponseOption {
+    return func(r *JSONAPIResponse) {
+        r.Included = append([]Resource(nil), resources...)
+    }
+}
 
 
-func WithResource[T dtos.DTOInterface](id string, resourceType string, attributes T, opts ...ResourceOption[T]) ResponseOption[T] {
-    return func(r *ResourceResponse[T]) {
-        resource := &Resource[T]{
-            ResourceIdentifier: ResourceIdentifier{
-                ID:   id,
+func WithDataResource(id common.ID, resourceType common.Type, attributes interface{}, opts ...ResourceOption) ResponseOption {
+    return func(r *JSONAPIResponse) {
+        resource := &Resource{
+            ResourceIdentifier: common.ResourceIdentifier{
+                ID:   &id,
                 Type: resourceType,
             },
             Attributes:   attributes,
@@ -116,15 +120,22 @@ func WithResource[T dtos.DTOInterface](id string, resourceType string, attribute
         for _, opt := range opts {
             opt(resource)
         }
-        r.resource = resource
-		r.resources = nil
+        r.Data.resource = resource
+		r.Data.resources = nil
     }
 }
 
 
-func WithMultipleResources[T dtos.DTOInterface](res ...Resource[T]) ResponseOption[T] {
-    return func(r *ResourceResponse[T]) {
-        r.resources = append(r.resources, res...)
-        r.resource  = nil
+func WithManyDataResources(resource ...Resource) ResponseOption {
+    return func(r *JSONAPIResponse) {
+        r.Data.resources = append(r.Data.resources, resource...)
+        r.Data.resource  = nil
+    }
+}
+
+
+func WithOneDataResource(resource Resource) ResponseOption {
+    return func(r *JSONAPIResponse) {
+        r.Data = Data{resource: &resource}
     }
 }
