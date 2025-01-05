@@ -8,15 +8,15 @@ import (
 	"fmt"
 	"encoding/json"
 	"strings"
-	"github.com/midil-labs/core/shared/dtos"
 	jsonAPIError "github.com/midil-labs/core/shared/dtos/error"
+	"github.com/midil-labs/core/shared/dtos/common"
 )
 
 
-func NewResource(id string, resourceType string, attributes any, opts ...ResourceOption) *Resource {
+func NewResource(id string, resourceType string, attributes map[string]any, opts ...ResourceOption) *Resource {
 	r := &Resource{
-		ResourceIdentifier: ResourceIdentifier{
-			ID:   id,
+		ResourceIdentifier: common.ResourceIdentifier{
+			ID:   &id,
 			Type: resourceType,
 		},
 		Attributes:    attributes,
@@ -31,8 +31,8 @@ func NewResource(id string, resourceType string, attributes any, opts ...Resourc
 }
 
 
-func NewJsonAPIResponse(data Data, opts ...ResponseOption) *JSONAPIResponse {
-	builder := &JSONAPIResponse{Data: data}
+func NewJsonAPIResponse[T DataType](data T, opts ...ResponseOption[T]) *JSONAPIResponse[T] {
+	builder := &JSONAPIResponse[T]{Data: data}
 	for _, opt := range opts {
 		opt(builder)
 	}
@@ -40,46 +40,24 @@ func NewJsonAPIResponse(data Data, opts ...ResponseOption) *JSONAPIResponse {
 }
 
 
-func (r ResourceIdentifier) Validate() error {
-	if strings.TrimSpace(r.ID) == "" {
-		return fmt.Errorf("resource ID cannot be empty")
-	}
-	if strings.TrimSpace(r.Type) == "" {
-		return fmt.Errorf("resource type cannot be empty")
-	}
-	return nil
+func NewSingleAPIResponse(data *Resource, opts ...ResponseOption[*Resource]) *JSONAPIResponse[*Resource] {
+	return NewJsonAPIResponse[*Resource](data, opts...)
 }
 
 
-func (r Resource) Validate() error {
-	if err := r.ResourceIdentifier.Validate(); err != nil {
-		return err
-	}
-
-	if attrs, ok := any(r.Attributes).(dtos.DTOInterface); ok {
-		if err := attrs.Validate(); err != nil {
-			return fmt.Errorf("attributes validation failed: %v", err)
-		}
-	}
-
-	for name, rel := range r.Relationships {
-		if err := rel.Validate(); err != nil {
-			return fmt.Errorf("relationship '%s' validation failed: %v", name, err)
-		}
-	}
-
-	return nil
+func NewListAPIResponse(data []Resource, opts ...ResponseOption[ListResource]) *JSONAPIResponse[ListResource] {
+	return NewJsonAPIResponse(data, opts...)
 }
 
 
 func (c *RelationshipData) UnmarshalJSON(b []byte) error {
-	var resource ResourceIdentifier
+	var resource common.ResourceIdentifier
 	if err := json.Unmarshal(b, &resource); err == nil && resource.ID != "" {
 		c.Resource = &resource
 		return nil
 	}
 	
-	var resources []ResourceIdentifier
+	var resources []common.ResourceIdentifier
 	if err := json.Unmarshal(b, &resources); err == nil {
 		c.Resources = resources
 		return nil
@@ -97,99 +75,13 @@ func (c RelationshipData) MarshalJSON() ([]byte, error) {
 }
 
 
-func (r RelationshipData) Validate() error {
-	if r.Resource != nil {
-		return r.Resource.Validate()
-	}
-	for _, res := range r.Resources {
-		if err := res.Validate(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-
-func (r Relationship) Validate() error {
-	return r.Data.Validate()
-}
-
-func (r *JSONAPIResponse) UnmarshalJSON(data []byte) error {
-	var singleResponse struct {
-		Data *Resource `json:"data"`
-		Meta  NonStandardMeta       `json:"meta,omitempty"`
-	}
-	if err := json.Unmarshal(data, &singleResponse); err == nil && singleResponse.Data != nil {
-		r.Data.resource = singleResponse.Data
-		r.Meta = singleResponse.Meta
-		return nil
-	}
-
-	var multiResponse struct {
-		Data []Resource `json:"data"`
-		Links *PaginationLinks       `json:"links,omitempty"`
-		Meta  NonStandardMeta        `json:"meta,omitempty"`
-	}
-	if err := json.Unmarshal(data, &multiResponse); err == nil {
-		r.Data.resources = multiResponse.Data
-		r.Links = multiResponse.Links
-		r.Meta = multiResponse.Meta
-		return nil
-	}
-
-	return fmt.Errorf("invalid resource response format")
-}
-
-
-func (r JSONAPIResponse) MarshalJSON() ([]byte, error) {
-	response := make(map[string]interface{})
-
-	if r.Data.resource != nil {
-		response["data"] = r.Data.resource
-	} else if len(r.Data.resources) > 0 {
-		response["data"] = r.Data.resources
-	}
-
-	if r.Links != nil {
-		response["links"] = r.Links
-	}
-	if r.Meta != nil {
-		response["meta"] = r.Meta
-	}
-	if len(r.Included) > 0 {
-		response["included"] = r.Included
-	}
-
-	return json.Marshal(response)
-}
-
-func (r JSONAPIResponse) Validate() error {
-	if r.Data.resource != nil {
-		if r.Links != nil {
-			return fmt.Errorf("single resource response cannot have pagination links")
-		}
-
-		if err := r.Data.resource.Validate(); err != nil {
-			return fmt.Errorf("single resource validation failed: %v", err)
-		}
-	}
-
-	for i, res := range r.Data.resources {
-		if err := res.Validate(); err != nil {
-			return fmt.Errorf("resource at index %d validation failed: %v", i, err)
-		}
-	}
-
-	return nil
-}
-
-
 func (r *ErrorResponse) Validate() error {
 	if len(r.Errors) == 0 {
 		return fmt.Errorf("errors array cannot be empty")
 	}
 	return nil
 }
+
 
 func (v *ErrorResponse) Add(status int, code, title, detail string, opts ...jsonAPIError.Option) *ErrorResponse {
 	err := jsonAPIError.New(status, code, title, detail, opts...)
@@ -206,6 +98,7 @@ func (r *ErrorResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal((*Alias)(r))
 }
 
+
 func (r *ErrorResponse) UnmarshalJSON(data []byte) error {
 	type Alias ErrorResponse
 	aux := &struct {
@@ -218,6 +111,7 @@ func (r *ErrorResponse) UnmarshalJSON(data []byte) error {
 	}
 	return r.Validate()
 }
+
 
 func NewErrorResponse(meta map[string]interface{}, errs ...jsonAPIError.ErrorObject) *ErrorResponse {
 	return &ErrorResponse{

@@ -3,7 +3,7 @@ package errors
 import (
 	"net/http"
 	"encoding/json"
-	response "github.com/midil-labs/core/shared/dtos/response"
+	"github.com/midil-labs/core/shared/dtos/response"
 )
 
 // ResponseWriter is a type alias for a function that takes an http.ResponseWriter
@@ -11,9 +11,8 @@ import (
 // HTTP responses.
 type ResponseWriter = func(w http.ResponseWriter) error
 
-
 // The provided code must be a valid HTTP 2xx status code.
-func Success(w http.ResponseWriter, statusCode int, response response.JsonAPIResponseType) error {
+func Success[T response.DataType](w http.ResponseWriter, statusCode int, response response.JSONAPIResponse[T]) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
@@ -70,19 +69,19 @@ func BadRequest(response response.ErrorResponse) ResponseWriter {
 	}
 }
 
-func OK(response response.JsonAPIResponseType) ResponseWriter {
+func OK[T response.DataType](response response.JSONAPIResponse[T]) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Success(w, http.StatusOK, response)
 	}
 }
 
-func Created(response response.JsonAPIResponseType) ResponseWriter {
+func Created[T response.DataType](response response.JSONAPIResponse[T]) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Success(w, http.StatusCreated, response)
 	}
 }
 
-func Accepted(response response.JsonAPIResponseType) ResponseWriter {
+func Accepted[T response.DataType](response response.JSONAPIResponse[T]) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Success(w, http.StatusAccepted, response)
 	}

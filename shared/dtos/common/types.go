@@ -32,11 +32,17 @@ type Links struct {
 	Self    string      		`json:"self,omitempty"`
 	Related *RelatedLink 		`json:"related,omitempty"`
 }
+func (l *Links) ApplyOptions(opts ...LinksOption) {
+	ApplyOptions(l, opts...)
+}
 
-
-// Relationship ...
+// Relationship is a JSON:API relationship object.
 type Relationship struct {
 	Data  RelationshipData 			`json:"data,omitempty"`
 	Meta  NonStandardMeta           `json:"meta,omitempty"`
 	Links *Links                    `json:"links,omitempty"`
+}
+
+func (r *Relationship) ApplyOptions(opts ...RelationshipOption) {
+	ApplyOptions(r, opts...)
 }

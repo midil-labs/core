@@ -23,12 +23,6 @@ type Pagination struct {
 	TotalCount int64 		`json:"total_count"`
 }
 
-// ResourceIdentifier is a JSON:API resource identifier object. It contains the resource ID and type.
-type ResourceIdentifier struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-}
-
 
 //Resource is a JSON:API resource object. It contains the resource identifier, attributes, relationships, links, and meta-information.
 //The attributes field is an interface{} type to allow for any type of data to be passed in. 
@@ -37,15 +31,15 @@ type ResourceIdentifier struct {
 //The meta field is a map of non-standard meta-information.
 type Resource struct {
 	common.ResourceIdentifier
-	Attributes    interface{}                   `json:"attributes,omitempty"`
+	Attributes    map[string]interface{}                   `json:"attributes,omitempty"`
 	Relationships map[string]Relationship 		`json:"relationships,omitempty"`
 	Links         *common.Links                 		`json:"links,omitempty"`
 	Meta          common.NonStandardMeta        		`json:"meta,omitempty"`
 }
 
 type RelationshipData struct {
-	Resource   *ResourceIdentifier
-	Resources []ResourceIdentifier
+	Resource   *common.ResourceIdentifier
+	Resources []common.ResourceIdentifier
 }
 
 
@@ -55,12 +49,17 @@ type Relationship struct {
 	Meta  common.NonStandardMeta    `json:"meta,omitempty"`
 }
 
-// Data is a JSON:API data object. It contains either a single resource object or an array of resource objects.
+//Data is a JSON:API data object. It contains either a single resource object or an array of resource objects.
 type Data struct {
 	resource   *Resource 
 	resources []Resource
 }
 
+type ListResource = []Resource
+
+type DataType interface {
+    ~*Resource | ~ListResource
+}
 
 type ErrorResponse struct {
 	Errors []error.ErrorObject   			`json:"errors" validate:"required"`
@@ -69,13 +68,9 @@ type ErrorResponse struct {
 
 
 // JSONAPIResponse is a generic JSON:API response object. It contains the data, errors, meta-information, pagination links, and included resources.
-type JSONAPIResponse struct {
-	Data   		Data               				`json:"data"`
-	Errors 		[]error.ErrorObject   			`json:"errors,omitempty"`
+type JSONAPIResponse[T DataType] struct {
+	Data   		T               				`json:"data"`
 	Meta    	common.NonStandardMeta      	`json:"meta,omitempty"`
 	Links   	*PaginationLinks     			`json:"links,omitempty"`
 	Included 	[]Resource 						`json:"included,omitempty"`
 }
-
-
-type JsonAPIResponseType = JSONAPIResponse

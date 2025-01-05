@@ -124,6 +124,7 @@ func NewTooLongError(detail string, opts ...Option) *ErrorObject {
 }
 
 // Resource Errors
+
 func NewNotFoundError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusNotFound,
@@ -186,6 +187,7 @@ func NewInvalidStateError(resource, currentState, requiredState string, opts ...
 }
 
 // Infrastructure Errors
+
 func NewDatabaseError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusInternalServerError,

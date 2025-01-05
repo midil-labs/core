@@ -16,11 +16,11 @@ type PaginationQuery struct {
 }
 
 // Fields is a map of fields to include in the response.
-type Fields map[string][]string
+type Fields = map[string][]string
 
 
 // Include is a slice of strings that represent the relationships to include in the response.
-type Include []string
+type Include = []string
 
 
 // QueryParams is a struct that holds all the query parameters that can be passed to the API.

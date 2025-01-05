@@ -4,6 +4,7 @@ import "github.com/midil-labs/core/shared/dtos/common"
 
 type QueryOption = common.Option[QueryParams]
 type BodyOption common.Option[Resource]
+// type HeaderOption common.Option[Header]
 
 
 func WithFilter(fields map[string][]string) QueryOption {
@@ -49,6 +50,7 @@ func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOptio
 	}
 }
 
+
 func WithToManyRelationship(name string, resources []common.ResourceIdentifier, opts ...common.MetaOption) BodyOption {
 	return func(r *Resource) {
 		if r.Relationships == nil {
@@ -57,6 +59,32 @@ func WithToManyRelationship(name string, resources []common.ResourceIdentifier, 
 		relationship := common.Relationship{
 			Data: common.RelationshipData{
 				Resources: resources,
+			},
+		}
+		common.ApplyOptions[common.NonStandardMeta](&relationship.Meta, opts...)
+
+		r.Relationships[name] = relationship
+	}
+}
+
+func WithToManyRelationshipFromMap(name string, resources []map[string]string, opts ...common.MetaOption) BodyOption {
+	return func(r *Resource) {
+		if r.Relationships == nil {
+			r.Relationships = make(map[string]common.Relationship)
+		}
+
+		var resourceIdentifiers []common.ResourceIdentifier
+		for _, res := range resources {
+			id := res["id"]
+			resourceIdentifiers = append(resourceIdentifiers, common.ResourceIdentifier{
+				Type: res["type"],
+				ID:   &id,
+			})
+		}
+
+		relationship := common.Relationship{
+			Data: common.RelationshipData{
+				Resources: resourceIdentifiers,
 			},
 		}
 		common.ApplyOptions[common.NonStandardMeta](&relationship.Meta, opts...)

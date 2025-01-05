@@ -3,7 +3,7 @@ package response
 import "github.com/midil-labs/core/shared/dtos/common"
 
 type ResourceOption = common.Option[Resource]
-type ResponseOption  = common.Option[JSONAPIResponse]
+type ResponseOption[T DataType] common.Option[JSONAPIResponse[T]]
 
 
 func WithToOneRelationship(name, relType, relID string, links *common.Links, meta common.NonStandardMeta) ResourceOption {
@@ -13,9 +13,9 @@ func WithToOneRelationship(name, relType, relID string, links *common.Links, met
         }
         r.Relationships[name] = Relationship{
             Data: RelationshipData{
-                Resource: &ResourceIdentifier{
+                Resource: &common.ResourceIdentifier{
                     Type: relType,
-                    ID:   relID,
+                    ID:   &relID,
                 },
             },
             Links: links,
@@ -24,7 +24,7 @@ func WithToOneRelationship(name, relType, relID string, links *common.Links, met
     }
 }
 
-func WithToManyRelationship(name string, resources []ResourceIdentifier, links *common.Links, meta common.NonStandardMeta) ResourceOption {
+func WithToManyRelationship(name string, resources []common.ResourceIdentifier, links *common.Links, meta common.NonStandardMeta) ResourceOption {
     return func(r *Resource) {
         if r.Relationships == nil {
             r.Relationships = make(map[string]Relationship)
@@ -56,8 +56,8 @@ func WithLinks(self string, related *common.RelatedLink) ResourceOption {
 	}
 }
 
-func WithIncluded(included []Resource) ResponseOption {
-	return func(rr *JSONAPIResponse) {
+func WithIncluded[T DataType](included ListResource) ResponseOption[T] {
+	return func(rr *JSONAPIResponse[T]) {
 		rr.Included = included
 	}
 }
@@ -69,8 +69,8 @@ func WithMeta(meta map[string]any) ResourceOption {
 	}
 }
 
-func WithPagination(currentPage, prevPage, nextPage, totalPages, totalCount int64) ResponseOption {
-    return func(rr *JSONAPIResponse) {
+func WithPagination(currentPage, prevPage, nextPage, totalPages, totalCount int64) ResponseOption[ListResource] {
+    return func(rr *JSONAPIResponse[ListResource]) {
         if rr.Meta == nil {
             rr.Meta = common.NonStandardMeta{}
         }
@@ -85,8 +85,8 @@ func WithPagination(currentPage, prevPage, nextPage, totalPages, totalCount int6
 }
 
 
-func WithPaginationLinks(self, first, last, prev, next string) ResponseOption {
-	return func(r *JSONAPIResponse) {
+func WithPaginationLinks(self, first, last, prev, next string) ResponseOption[ListResource] {
+	return func(r *JSONAPIResponse[ListResource]) {
 		if r.Links == nil {
 			r.Links = &PaginationLinks{}
 		}
@@ -99,15 +99,15 @@ func WithPaginationLinks(self, first, last, prev, next string) ResponseOption {
 }
 
 
-func WithIncludedResources(resources []Resource) ResponseOption {
-    return func(r *JSONAPIResponse) {
-        r.Included = append([]Resource(nil), resources...)
+func WithIncludedResources[T DataType](resources ListResource) ResponseOption[T] {
+    return func(r *JSONAPIResponse[T]) {
+        r.Included = append(ListResource(nil), resources...)
     }
 }
 
 
-func WithDataResource(id common.ID, resourceType common.Type, attributes interface{}, opts ...ResourceOption) ResponseOption {
-    return func(r *JSONAPIResponse) {
+func WithDataResource(id common.ID, resourceType common.Type, attributes map[string]interface{}, opts ...ResourceOption) ResponseOption[*Resource] {
+    return func(r *JSONAPIResponse[*Resource]) {
         resource := &Resource{
             ResourceIdentifier: common.ResourceIdentifier{
                 ID:   &id,
@@ -120,22 +120,13 @@ func WithDataResource(id common.ID, resourceType common.Type, attributes interfa
         for _, opt := range opts {
             opt(resource)
         }
-        r.Data.resource = resource
-		r.Data.resources = nil
+        r.Data = resource
     }
 }
 
 
-func WithManyDataResources(resource ...Resource) ResponseOption {
-    return func(r *JSONAPIResponse) {
-        r.Data.resources = append(r.Data.resources, resource...)
-        r.Data.resource  = nil
-    }
-}
-
-
-func WithOneDataResource(resource Resource) ResponseOption {
-    return func(r *JSONAPIResponse) {
-        r.Data = Data{resource: &resource}
+func WithManyDataResources(resources ...Resource) ResponseOption[ListResource] {
+    return func(r *JSONAPIResponse[ListResource]) {
+        r.Data = append(r.Data, resources...)
     }
 }
