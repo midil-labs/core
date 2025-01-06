@@ -44,7 +44,7 @@ func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOptio
 			},
 		}
 
-		common.ApplyOptions[common.NonStandardMeta](&relationship.Meta, opts...)
+		common.ApplyOptions(&relationship.Meta, opts...)
 
 		r.Relationships[name] = relationship
 	}
@@ -61,7 +61,7 @@ func WithToManyRelationship(name string, resources []common.ResourceIdentifier, 
 				Resources: resources,
 			},
 		}
-		common.ApplyOptions[common.NonStandardMeta](&relationship.Meta, opts...)
+		common.ApplyOptions(&relationship.Meta, opts...)
 
 		r.Relationships[name] = relationship
 	}
@@ -87,7 +87,7 @@ func WithToManyRelationshipFromMap(name string, resources []map[string]string, o
 				Resources: resourceIdentifiers,
 			},
 		}
-		common.ApplyOptions[common.NonStandardMeta](&relationship.Meta, opts...)
+		common.ApplyOptions(&relationship.Meta, opts...)
 
 		r.Relationships[name] = relationship
 	}

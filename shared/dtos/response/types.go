@@ -49,12 +49,6 @@ type Relationship struct {
 	Meta  common.NonStandardMeta    `json:"meta,omitempty"`
 }
 
-//Data is a JSON:API data object. It contains either a single resource object or an array of resource objects.
-type Data struct {
-	resource   *Resource 
-	resources []Resource
-}
-
 type ListResource = []Resource
 
 type DataType interface {

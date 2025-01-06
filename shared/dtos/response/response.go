@@ -13,24 +13,6 @@ import (
 )
 
 
-func NewResource(id string, resourceType string, attributes map[string]any, opts ...ResourceOption) *Resource {
-	r := &Resource{
-		ResourceIdentifier: common.ResourceIdentifier{
-			ID:   &id,
-			Type: resourceType,
-		},
-		Attributes:    attributes,
-		Relationships: make(map[string]Relationship),
-		Meta:         make(map[string]any),
-	}
-
-	for _, opt := range opts {
-		opt(r)
-	}
-	return r
-}
-
-
 func NewJsonAPIResponse[T DataType](data T, opts ...ResponseOption[T]) *JSONAPIResponse[T] {
 	builder := &JSONAPIResponse[T]{Data: data}
 	for _, opt := range opts {
@@ -41,7 +23,7 @@ func NewJsonAPIResponse[T DataType](data T, opts ...ResponseOption[T]) *JSONAPIR
 
 
 func NewSingleAPIResponse(data *Resource, opts ...ResponseOption[*Resource]) *JSONAPIResponse[*Resource] {
-	return NewJsonAPIResponse[*Resource](data, opts...)
+	return NewJsonAPIResponse(data, opts...)
 }
 
 
@@ -52,7 +34,7 @@ func NewListAPIResponse(data []Resource, opts ...ResponseOption[ListResource]) *
 
 func (c *RelationshipData) UnmarshalJSON(b []byte) error {
 	var resource common.ResourceIdentifier
-	if err := json.Unmarshal(b, &resource); err == nil && resource.ID != "" {
+	if err := json.Unmarshal(b, &resource); err == nil && resource.ID != nil && *resource.ID != "" {
 		c.Resource = &resource
 		return nil
 	}
