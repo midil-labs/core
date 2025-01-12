@@ -4,6 +4,9 @@ import "github.com/midil-labs/core/shared/dtos/common"
 
 
 type ResponseOption[T DataType] common.Option[JSONAPIResponse[T]]
+type ResourceOption common.Option[Resource]
+
+type ListResourceOption common.Option[JSONAPIResponse[ListResource]] // ListResource response option
 
 
 // WithMeta merges the provided `meta` into different places based on `scope`.
@@ -29,7 +32,7 @@ func WithMeta[T DataType](meta map[string]any, scope Scope) ResponseOption[T] {
 				mergeResourceMeta(dataAny, meta)
 			case ListResource:
 				for i := range dataAny {
-					mergeResourceMeta(&dataAny[i], meta)
+					mergeResourceMeta(dataAny[i], meta)
 				}
 				r.Data = any(dataAny).(T)
 			}
@@ -40,7 +43,7 @@ func WithMeta[T DataType](meta map[string]any, scope Scope) ResponseOption[T] {
 				mergeRelationshipMeta(dataAny, meta)
 			case ListResource:
 				for i := range dataAny {
-					mergeRelationshipMeta(&dataAny[i], meta)
+					mergeRelationshipMeta(dataAny[i], meta)
 				}
 				r.Data = any(dataAny).(T)
 			}
@@ -51,7 +54,7 @@ func WithMeta[T DataType](meta map[string]any, scope Scope) ResponseOption[T] {
 				mergeLinksMeta(dataAny, meta)
 			case ListResource:
 				for i := range dataAny {
-					mergeLinksMeta(&dataAny[i], meta)
+					mergeLinksMeta(dataAny[i], meta)
 				}
 				r.Data = any(dataAny).(T)
 			}

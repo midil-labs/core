@@ -1,8 +1,9 @@
-package errors
+package http
 
 import (
 	"net/http"
 	"encoding/json"
+	jerror "github.com/midil-labs/core/shared/dtos/error"
 	"github.com/midil-labs/core/shared/dtos/response"
 )
 
@@ -13,57 +14,58 @@ type ResponseWriter = func(w http.ResponseWriter) error
 
 // The provided code must be a valid HTTP 2xx status code.
 func Success[T response.DataType](w http.ResponseWriter, statusCode int, response response.JSONAPIResponse[T]) error {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Type", "application/vnd.api+json; charset=utf-8")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
 	return nil
 }
 
 // The provided status code must be a valid HTTP 4xx-5xx status code.
-func Error(w http.ResponseWriter, statusCode int, response response.ErrorResponse) error {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+func Error(w http.ResponseWriter, statusCode int, response jerror.JSONAPIError) error {
+	w.Header().Set("Content-Type", "application/vnd.api+json; charset=utf-8")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
 	return nil
 }
 
-func NotFound(response response.ErrorResponse) ResponseWriter {
+
+func NotFound(response jerror.JSONAPIError) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Error(w, http.StatusNotFound, response)
 	}
 }
 
-func InternalServerError(response response.ErrorResponse) ResponseWriter {
+func InternalServerError(response jerror.JSONAPIError) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Error(w, http.StatusInternalServerError, response)
 	}
 }
 
-func Unauthorized(response response.ErrorResponse) ResponseWriter {
+func Unauthorized(response jerror.JSONAPIError) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Error(w, http.StatusUnauthorized, response)
 	}
 }
 
-func Forbidden(response response.ErrorResponse) ResponseWriter {
+func Forbidden(response jerror.JSONAPIError) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Error(w, http.StatusForbidden, response)
 	}
 }
 
-func Conflict(response response.ErrorResponse) ResponseWriter {
+func Conflict(response jerror.JSONAPIError) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Error(w, http.StatusConflict, response)
 	}
 }
 
-func UnprocessableEntity(response response.ErrorResponse) ResponseWriter {
+func UnprocessableEntity(response jerror.JSONAPIError) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Error(w, http.StatusUnprocessableEntity, response)
 	}
 }
 
-func BadRequest(response response.ErrorResponse) ResponseWriter {
+func BadRequest(response jerror.JSONAPIError) ResponseWriter {
 	return func(w http.ResponseWriter) error {
 		return Error(w, http.StatusBadRequest, response)
 	}

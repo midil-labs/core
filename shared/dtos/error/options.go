@@ -1,12 +1,13 @@
 package error
 
-import ("encoding/json"
-		"github.com/midil-labs/core/shared/dtos/common")
+import (
+	"encoding/json"
 
+	"github.com/midil-labs/core/shared/dtos/common"
+)
 
 type SerializationOption func(*json.Encoder)
-
-type Option  = common.Option[ErrorObject]
+type Option common.Option[ErrorObject]
 
 func WithID(id string) Option {
 	return func(e *ErrorObject) {
@@ -14,7 +15,7 @@ func WithID(id string) Option {
 	}
 }
 
-func WithLinks(about, typeURL string) Option {
+func WithLinks[T ErrorObject](about, typeURL string) Option {
 	return func(e *ErrorObject) {
 		e.Links = &ErrorLinks{
 			About: about,
@@ -23,7 +24,7 @@ func WithLinks(about, typeURL string) Option {
 	}
 }
 
-func WithSource(pointer, parameter, header string) Option {
+func WithSource[T ErrorObject](pointer, parameter, header string) Option {
 	return func(e *ErrorObject) {
 		e.Source = &ErrorSource{
 			Pointer:   pointer,
@@ -33,13 +34,13 @@ func WithSource(pointer, parameter, header string) Option {
 	}
 }
 
-func WithMeta(meta map[string]interface{}) Option {
+func WithMeta[T ErrorObject](meta map[string]interface{}) Option {
 	return func(e *ErrorObject) {
 		e.Meta = meta
 	}
 }
 
-func WithLocalization(lang Language, title, detail string) Option {
+func WithLocalization[T ErrorObject](lang Language, title, detail string) Option {
 	return func(e *ErrorObject) {
 		if e.localizer == nil {
 			e.localizer = make(map[Language]Localization)

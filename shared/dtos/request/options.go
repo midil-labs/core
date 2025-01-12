@@ -1,35 +1,71 @@
 package request
 
-import "github.com/midil-labs/core/shared/dtos/common"
+import (
+	"github.com/midil-labs/core/shared/dtos/common"
+	"net/http"
+)
 
-type QueryOption = common.Option[QueryParams]
-type BodyOption common.Option[Resource]
-// type HeaderOption common.Option[Header]
+type QueryOption = common.Option[Query]
+
+type RequestOption[T RequestType] common.Option[JSONAPIRequest[T]]
+
+type ResourceOption  = common.Option[Resource]
+
+type BodyOption[T RequestType] common.Option[T]
 
 
-func WithFilter(fields map[string][]string) QueryOption {
-	return func(q *QueryParams) {
-		q.Filter.Fields = fields
+func WithFilter(key string, values ...string) QueryOption {
+    return func(q *Query) {
+        if q.Filter == nil {
+            q.Filter = make(Filter)
+        }
+        q.Filter[key] = append(q.Filter[key], values...)
+    }
+}
+
+
+
+// WithSort adds sorting criteria to the query.
+func WithSort(fields []string) QueryOption {
+	return func(q *Query) {
+		q.Sort = append(q.Sort, fields...)
 	}
 }
 
-func WithSort(fields ...string) QueryOption {
-	return func(q *QueryParams) {
-		if q.Sort.Fields == nil {
-			q.Sort.Fields = make([]string, 0)
-		}
-		q.Sort.Fields = append(q.Sort.Fields, fields...)
+
+// WithFields adds sparse fieldsets to the query.
+func WithFields(key string, value ...string) QueryOption {
+	return func(q *Query) {
+		q.Fields[key] = value
 	}
 }
+
+
+// WithInclude adds relationships to include in the response.
+func WithInclude(fields ...string) QueryOption {
+    return func(q *Query) {
+        q.Include = append(q.Include, fields...)
+    }
+}
+
 
 func WithPagination(pageSize, pageNumber int) QueryOption {
-	return func(q *QueryParams) {
-		q.Page.PageSize = pageSize
-		q.Page.PageNumber = pageNumber
+	return func(q *Query) {
+		q.Page.Size = pageSize
+		q.Page.Number = pageNumber
 	}
 }
 
-func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOption) BodyOption {
+// WithLID sets the LID field on the Resource.
+// It takes a string and assigns it to the LID field after converting it to common.ID.
+func WithLID(lid string) ResourceOption {
+    return func(r *Resource) {
+        id := common.ID(lid)
+        r.LID = &id
+    }
+}
+
+func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOption) ResourceOption {
 	return func(r *Resource) {
 		if r.Relationships == nil {
 			r.Relationships = make(map[string]common.Relationship)
@@ -41,6 +77,7 @@ func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOptio
 					Type: relType,
 					ID:   &relID,
 				},
+				Resources: nil,
 			},
 		}
 
@@ -51,7 +88,7 @@ func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOptio
 }
 
 
-func WithToManyRelationship(name string, resources []common.ResourceIdentifier, opts ...common.MetaOption) BodyOption {
+func WithToManyRelationship(name string, resources []common.ResourceIdentifier, opts ...common.MetaOption) ResourceOption {
 	return func(r *Resource) {
 		if r.Relationships == nil {
 			r.Relationships = make(map[string]common.Relationship)
@@ -59,6 +96,7 @@ func WithToManyRelationship(name string, resources []common.ResourceIdentifier, 
 		relationship := common.Relationship{
 			Data: common.RelationshipData{
 				Resources: resources,
+				Resource: nil,
 			},
 		}
 		common.ApplyOptions(&relationship.Meta, opts...)
@@ -67,7 +105,8 @@ func WithToManyRelationship(name string, resources []common.ResourceIdentifier, 
 	}
 }
 
-func WithToManyRelationshipFromMap(name string, resources []map[string]string, opts ...common.MetaOption) BodyOption {
+
+func WithToManyRelationshipFromMap[T RequestType](name string, resources []map[string]string, opts ...common.MetaOption) ResourceOption {
 	return func(r *Resource) {
 		if r.Relationships == nil {
 			r.Relationships = make(map[string]common.Relationship)
@@ -90,5 +129,38 @@ func WithToManyRelationshipFromMap(name string, resources []map[string]string, o
 		common.ApplyOptions(&relationship.Meta, opts...)
 
 		r.Relationships[name] = relationship
+	}
+}
+
+
+func WithQuery[T RequestType](req *http.Request) RequestOption[T] {
+	return func(r *JSONAPIRequest[T]) {
+		if r.Query == nil {
+			r.Query = &Query{}
+		}
+		query := ParseQueryParams(req.URL.Query())
+		r.Query = &query
+	}
+}
+
+func WithHeaders[T RequestType](req *http.Request) RequestOption[T] {
+	return func(r *JSONAPIRequest[T]) {
+		if r.Header == nil {
+			r.Header = make(map[string][]string)
+		}
+		for k, v := range req.Header {
+			r.Header[k] = v
+		}
+	}
+}
+
+func WithBody[T RequestType](req *http.Request) RequestOption[T] {
+	return func(r *JSONAPIRequest[T]) {
+		body := req.Body
+		parsedBody, err := ParseBody[T](body)
+		if err != nil {
+			panic(err)
+		}
+		r.Body = parsedBody
 	}
 }

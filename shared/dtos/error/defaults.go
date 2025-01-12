@@ -5,43 +5,20 @@ import (
 	"net/http"
 )
 
-const (
-	CodeUnauthorized           = "AUTH_UNAUTHORIZED"
-	CodeInvalidCredentials     = "AUTH_INVALID_CREDENTIALS"
-	CodeTokenExpired           = "AUTH_TOKEN_EXPIRED"
-	CodeTokenInvalid           = "AUTH_TOKEN_INVALID"
-	CodeInsufficientPermission = "AUTH_INSUFFICIENT_PERMISSION"
-	CodeSessionExpired         = "AUTH_SESSION_EXPIRED"
-
-	CodeValidationFailed      = "VALIDATION_FAILED"
-	CodeInvalidInput          = "VALIDATION_INVALID_INPUT"
-	CodeInvalidFormat         = "VALIDATION_INVALID_FORMAT"
-	CodeMissingField          = "VALIDATION_MISSING_FIELD"
-	CodeInvalidValue          = "VALIDATION_INVALID_VALUE"
-	CodeTooLong               = "VALIDATION_TOO_LONG"
-	CodeTooShort              = "VALIDATION_TOO_SHORT"
-	CodeOutOfRange            = "VALIDATION_OUT_OF_RANGE"
-
-	CodeNotFound             = "RESOURCE_NOT_FOUND"
-	CodeAlreadyExists        = "RESOURCE_ALREADY_EXISTS"
-	CodeConflict             = "RESOURCE_CONFLICT"
-	CodeGone                 = "RESOURCE_GONE"
-	CodeLocked               = "RESOURCE_LOCKED"
-
-	CodeBusinessRule         = "BUSINESS_RULE_VIOLATION"
-	CodeQuotaExceeded        = "BUSINESS_QUOTA_EXCEEDED"
-	CodeRateLimitExceeded    = "BUSINESS_RATE_LIMIT_EXCEEDED"
-	CodeInvalidState         = "BUSINESS_INVALID_STATE"
-	CodeDependencyConflict   = "BUSINESS_DEPENDENCY_CONFLICT"
-
-	CodeDatabaseError       = "INFRA_DATABASE_ERROR"
-	CodeNetworkError        = "INFRA_NETWORK_ERROR"
-	CodeServiceUnavailable  = "INFRA_SERVICE_UNAVAILABLE"
-	CodeTimeout             = "INFRA_TIMEOUT"
-	CodeInternalError       = "INFRA_INTERNAL_ERROR"
-)
 
 // Authentication/Authorization Errors
+
+// NewUnauthorizedError creates a new ErrorObject representing an unauthorized error.
+// It sets the HTTP status to 401 Unauthorized and uses the CodeUnauthorized code.
+// The error message includes a detailed description of the unauthorized error.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewUnauthorizedError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusUnauthorized,
@@ -52,6 +29,17 @@ func NewUnauthorizedError(detail string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewForbiddenError creates a new ErrorObject representing a forbidden error.
+// It sets the HTTP status to 403 Forbidden and uses the CodeForbidden code.
+// The error message includes a detailed description of the forbidden error.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewInvalidCredentialsError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusUnauthorized,
@@ -62,6 +50,17 @@ func NewInvalidCredentialsError(detail string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewTokenExpiredError creates a new ErrorObject representing a token expired error.
+// It sets the HTTP status to 401 Unauthorized and uses the CodeTokenExpired code.
+// The error message includes a detailed description of the token expired error.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewTokenExpiredError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusUnauthorized,
@@ -72,6 +71,17 @@ func NewTokenExpiredError(detail string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewInsufficientPermissionError creates a new ErrorObject representing an insufficient permission error.
+// It sets the HTTP status to 403 Forbidden and uses the CodeInsufficientPermission code.
+// The error message includes a detailed description of the insufficient permission error.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewInsufficientPermissionError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusForbidden,
@@ -83,16 +93,166 @@ func NewInsufficientPermissionError(detail string, opts ...Option) *ErrorObject 
 }
 
 // Validation Errors
-func NewValidationError(field, detail string, opts ...Option) *ErrorObject {
+// 422 Unprocessable Entity: The format is correct, but the data is semantically invalid.
+// 400 Bad Request: The query parameters are invalid, and the server cannot process the request because it is malformed or includes invalid parameters.
+
+
+func NewValidationError(source ErrorSource, detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusUnprocessableEntity,
 		CodeValidationFailed,
 		"Validation Failed",
 		detail,
-		append(opts, WithSource("/data/attributes/"+field, "", ""))...,
+		append(opts, WithSource(source.Pointer,source.Parameter,source.Header))...,
 	)
 }
 
+
+// NewInvalidFieldError creates a new ErrorObject representing an invalid field error.
+// It sets the HTTP status to 400 Bad Request and uses the CodeValidationFailed code.
+// The error message includes the field pointer and a detailed message.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - pointer: A string representing the field that is invalid.
+//   - detail: A string providing details about why the field is invalid.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
+func NewInvalidFieldError(pointer, detail string, opts ...Option) *ErrorObject {
+	return New(
+		http.StatusBadRequest,
+		CodeValidationFailed,
+		"Invalid Field",
+		fmt.Sprintf("The field '%s' is invalid: %s", pointer, detail),
+		append(opts, WithSource("/data/attributes/"+pointer, "", ""))...,
+	)
+}
+
+
+// NewUnprocessibleFieldError creates a new ErrorObject representing an unprocessible field error.
+// It sets the HTTP status to 422 Unprocessable Entity and uses the CodeValidationFailed code.
+// The error message includes the field pointer and a detailed message.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - pointer: A string representing the field that is unprocessible.
+//   - detail: A string providing details about why the field is unprocessible.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
+func NewUnprocessibleFieldError(pointer, detail string, opts ...Option) *ErrorObject {
+	return New(
+		http.StatusUnprocessableEntity,
+		CodeValidationFailed,
+		"Unprocessable Field",
+		fmt.Sprintf("The field '%s' is unprocessable: %s", pointer, detail),
+		append(opts, WithSource("/data/attributes/"+pointer, "", ""))...,
+	)
+}
+
+// NewInvalidQueryError creates a new ErrorObject representing an invalid query parameter error.
+// It sets the HTTP status to 400 Bad Request and uses the CodeValidationFailed code.
+// The error message includes the query parameter name and a detailed message.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - parameter: A string representing the query parameter that is invalid.
+//   - detail: A string providing details about why the query parameter is invalid.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
+func NewInvalidQueryError(parameter, detail string, opts ...Option) *ErrorObject {
+	return New(
+		http.StatusBadRequest,
+		CodeValidationFailed,
+		"Invalid Query Parameter",
+		fmt.Sprintf("The query parameter '%s' is invalid: %s", parameter, detail),
+		append(opts, WithSource("", parameter, ""))...,
+	)
+}
+
+
+// NewUnprocessableQueryError creates a new ErrorObject representing an unprocessible query parameter error.
+// It sets the HTTP status to 422 Unprocessable Entity and uses the CodeValidationFailed code.
+// The error message includes the query parameter name and a detailed message.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - parameter: A string representing the query parameter that is unprocessible.
+//   - detail: A string providing details about why the query parameter is unprocessible.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
+func NewUnprocessableQueryError(parameter, detail string, opts ...Option) *ErrorObject {
+	return New(
+		http.StatusUnprocessableEntity,
+		CodeValidationFailed,
+		"Unprocessable Query Parameter",
+		fmt.Sprintf("The query parameter '%s' is unprocessable: %s", parameter, detail),
+		append(opts, WithSource("", parameter, ""))...,
+	)
+}
+
+// NewInvalidHeaderError creates a new ErrorObject representing an invalid header error.
+// It sets the HTTP status to 422 Unprocessable Entity and uses the CodeValidationFailed code.
+// The error message includes the header name and a detailed message.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - header: A string representing the header that is invalid.
+//   - detail: A string providing details about why the header is invalid.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
+func NewInvalidHeaderError(header, detail string, opts ...Option) *ErrorObject {
+	return New(
+		http.StatusBadRequest,
+		CodeValidationFailed,
+		"Invalid Header",
+		fmt.Sprintf("The header '%s' is invalid: %s", header, detail),
+		append(opts, WithSource("", "", header))...,
+	)
+}
+
+// NewUnprocessableHeaderError creates a new ErrorObject representing an unprocessible header error.
+// It sets the HTTP status to 422 Unprocessable Entity and uses the CodeValidationFailed code.
+// The error message includes the header name and a detailed message.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - header: A string representing the header that is unprocessible.
+//   - detail: A string providing details about why the header is unprocessible.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
+func NewUnprocessableHeaderError(header, detail string, opts ...Option) *ErrorObject {
+	return New(
+		http.StatusUnprocessableEntity,
+		CodeValidationFailed,
+		"Unprocessable Header",
+		fmt.Sprintf("The header '%s' is unprocessable: %s", header, detail),
+		append(opts, WithSource("", "", header))...,
+	)
+}
+
+// NewMissingFieldError creates a new ErrorObject representing a missing field error.
+// It sets the HTTP status to 400 Bad Request and uses the CodeMissingField code.
+// The error message includes the field name and a detailed message.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - field: A string representing the missing field.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewMissingFieldError(field string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusBadRequest,
@@ -103,6 +263,18 @@ func NewMissingFieldError(field string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewInvalidFormatError creates a new ErrorObject representing an invalid format error.
+// It sets the HTTP status to 400 Bad Request and uses the CodeInvalidFormat code.
+// The error message includes the field name, the expected format, and a detailed message.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - field: A string representing the field with the invalid format.
+//   - expectedFormat: A string representing the expected format for the field.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewInvalidFormatError(field, expectedFormat string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusBadRequest,
@@ -113,6 +285,17 @@ func NewInvalidFormatError(field, expectedFormat string, opts ...Option) *ErrorO
 	)
 }
 
+// NewTooLongError creates a new ErrorObject representing a field too long error.
+// It sets the HTTP status to 400 Bad Request and uses the CodeTooLong code.
+// The error message includes the field name and a detailed message.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewTooLongError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusBadRequest,
@@ -125,6 +308,17 @@ func NewTooLongError(detail string, opts ...Option) *ErrorObject {
 
 // Resource Errors
 
+// NewNotFoundError creates a new ErrorObject indicating that a resource was not found.
+// It sets the HTTP status to 404 Not Found and uses the CodeNotFound code.
+// The error message includes a detailed description of the resource that was not found.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewNotFoundError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusNotFound,
@@ -135,6 +329,17 @@ func NewNotFoundError(detail string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewResourceAlreadyExistsError creates a new ErrorObject indicating that a resource already exists.
+// It sets the HTTP status to 409 Conflict and uses the CodeAlreadyExists code.
+// The error message includes a detailed description of the resource that already exists.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewResourceAlreadyExistsError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusConflict,
@@ -145,6 +350,17 @@ func NewResourceAlreadyExistsError(detail string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewResourceLockedError creates a new ErrorObject indicating that a resource is locked.
+// It sets the HTTP status to 423 Locked and uses the CodeLocked code.
+// The error message includes a detailed description of the locked resource.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewResourceLockedError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusLocked,
@@ -156,6 +372,19 @@ func NewResourceLockedError(detail string, opts ...Option) *ErrorObject {
 }
 
 // Business Logic Errors
+
+// NewQuotaExceededError creates a new ErrorObject indicating that a quota limit has been exceeded.
+// It sets the HTTP status to 403 Forbidden and uses the CodeQuotaExceeded code.
+// The error message includes the quota name and the limit that was exceeded.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - quota: A string representing the quota that was exceeded.
+//   - limit: An integer representing the limit that was exceeded.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewQuotaExceededError(quota string, limit int, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusForbidden,
@@ -166,6 +395,17 @@ func NewQuotaExceededError(quota string, limit int, opts ...Option) *ErrorObject
 	)
 }
 
+// NewRateLimitExceededError creates a new ErrorObject indicating that a rate limit has been exceeded.
+// It sets the HTTP status to 429 Too Many Requests and uses the CodeRateLimitExceeded code.
+// The error message includes the time window when the rate limit will reset.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - window: A string representing the time window when the rate limit will reset.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewRateLimitExceededError(window string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusTooManyRequests,
@@ -176,6 +416,19 @@ func NewRateLimitExceededError(window string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewInvalidStateError creates a new ErrorObject indicating that a resource is in an invalid state.
+// It sets the HTTP status to 409 Conflict and uses the CodeInvalidState code.
+// The error message includes the resource name, the current state, and the required state.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - resource: A string representing the resource that is in an invalid state.
+//   - currentState: A string representing the current state of the resource.
+//   - requiredState: A string representing the required state of the resource.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewInvalidStateError(resource, currentState, requiredState string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusConflict,
@@ -188,6 +441,17 @@ func NewInvalidStateError(resource, currentState, requiredState string, opts ...
 
 // Infrastructure Errors
 
+// NewDatabaseError creates a new ErrorObject indicating a database error.
+// It sets the HTTP status to 500 Internal Server Error and uses the CodeDatabaseError code.
+// The error message includes a detailed description of the database error.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the database error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewDatabaseError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusInternalServerError,
@@ -198,6 +462,17 @@ func NewDatabaseError(detail string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewNetworkError creates a new ErrorObject indicating a network error.
+// It sets the HTTP status to 502 Bad Gateway and uses the CodeNetworkError code.
+// The error message includes a detailed description of the network error.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - service: A string representing the service that caused the network error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewNetworkError(service string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusBadGateway,
@@ -208,6 +483,17 @@ func NewNetworkError(service string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewTimeoutError creates a new ErrorObject indicating a timeout error.
+// It sets the HTTP status to 504 Gateway Timeout and uses the CodeTimeout code.
+// The error message includes a detailed description of the timeout error.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - service: A string representing the service that caused the timeout error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewTimeoutError(service string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusGatewayTimeout,
@@ -218,6 +504,17 @@ func NewTimeoutError(service string, opts ...Option) *ErrorObject {
 	)
 }
 
+// NewServiceUnavailableError creates a new ErrorObject indicating that a service is unavailable.
+// It sets the HTTP status to 503 Service Unavailable and uses the CodeServiceUnavailable code.
+// The error message includes a detailed description of the unavailable service.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - service: A string representing the service that is unavailable.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewServiceUnavailableError(service string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusServiceUnavailable,
@@ -228,7 +525,17 @@ func NewServiceUnavailableError(service string, opts ...Option) *ErrorObject {
 	)
 }
 
-// Helper for generic internal errors
+// NewInternalError creates a new ErrorObject indicating an internal server error.
+// It sets the HTTP status to 500 Internal Server Error and uses the CodeInternalError code.
+// The error message includes a detailed description of the internal server error.
+// Additional options can be provided via the opts parameter.
+//
+// Parameters:
+//   - detail: A string providing additional details about the internal server error.
+//   - opts: Additional options to customize the ErrorObject.
+//
+// Returns:
+//   - *ErrorObject: A pointer to the newly created ErrorObject.
 func NewInternalError(detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusInternalServerError,

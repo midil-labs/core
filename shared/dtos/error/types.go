@@ -1,27 +1,26 @@
 // types.go
 package error
 
+import (
+	"github.com/midil-labs/core/shared/dtos/common"
+)
+
 // Supported languages for localization
 type Language string
 
-const (
-	EN Language = "en"
-	ES Language = "es"
-	FR Language = "fr"
-)
+// ErrCode represents the error code
+type ErrCode string
 
 // ErrorObject follows the JSON:API specification
 type ErrorObject struct {
-	ID     string                 `json:"id,omitempty" validate:"omitempty,uuid"`
-	Links  *ErrorLinks            `json:"links,omitempty" validate:"omitempty"`
-	Status string                 `json:"status,omitempty" validate:"required,numeric"`
-	Code   string                 `json:"code,omitempty" validate:"required"`
-	Title  string                 `json:"title,omitempty" validate:"required"`
-	Detail string                 `json:"detail,omitempty"`
-	Source *ErrorSource           `json:"source,omitempty"`
-	Meta   map[string]interface{} `json:"meta,omitempty"`
-
-	// Internal fields
+	ID        string                    `json:"id,omitempty" validate:"omitempty,uuid"`
+	Links     *ErrorLinks               `json:"links,omitempty" validate:"omitempty"`
+	Status    string                    `json:"status,omitempty" validate:"required,numeric"`
+	Code      ErrCode                   `json:"code,omitempty" validate:"required"`
+	Title     string                    `json:"title,omitempty" validate:"required"`
+	Detail    string                    `json:"detail,omitempty"`
+	Source    *ErrorSource              `json:"source,omitempty"`
+	Meta      map[string]interface{}    `json:"meta,omitempty"`
 	internal  error                     `json:"-"`
 	localizer map[Language]Localization `json:"-"`
 }
@@ -44,3 +43,9 @@ type Localization struct {
 	Title  string `json:"title"`
 	Detail string `json:"detail"`
 }
+
+type JSONAPIError struct {
+	Errors []ErrorObject          `json:"errors" validate:"required"`
+	Meta   common.NonStandardMeta `json:"meta,omitempty"`
+}
+

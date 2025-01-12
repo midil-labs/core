@@ -1,38 +1,38 @@
 package request
 
-import "github.com/midil-labs/core/shared/dtos/common"
+import (
 
-type Filter struct {
-	Fields
+	"github.com/midil-labs/core/shared/dtos/common"
+)
+
+// Page holds pagination data for queries.
+type Page struct {
+	Size   int `json:"page[size]"`
+	Number int `json:"page[number]"`
 }
 
-type Sort struct {
-	Fields []string
+// Filter represents filter criteria, mapping field names to their filter values.
+type Filter map[string][]string
+
+// Fields represents sparse fieldsets, mapping resource types to their requested fields.
+type Fields map[string][]string
+
+// Include represents relationships to include in the response.
+type Include []string
+
+// Sort represents sorting criteria as a slice of field names, with optional direction prefixes.
+type Sort []string
+
+// QueryParams holds all query parameters that can be passed to the API.
+type Query struct {
+	Filter  Filter  `json:"filter,omitempty"`
+	Sort    Sort    `json:"sort,omitempty"`
+	Page    *Page   `json:"page,omitempty"`
+	Fields  Fields  `json:"fields,omitempty"`
+	Include Include `json:"include,omitempty"`
 }
 
-type PaginationQuery struct {
-	PageSize   int
-	PageNumber int
-}
-
-// Fields is a map of fields to include in the response.
-type Fields = map[string][]string
-
-
-// Include is a slice of strings that represent the relationships to include in the response.
-type Include = []string
-
-
-// QueryParams is a struct that holds all the query parameters that can be passed to the API.
-type QueryParams struct {
-	Filter  *Filter
-	Sort    *Sort
-	Page    *PaginationQuery
-	Fields  *Fields
-	Include *Include
-}
-
-// ResourceRequest is a JSON:API resource object for inbound requests.
+// Resource is a JSON:API resource object for inbound requests.
 type Resource struct {
 	common.ResourceIdentifier
 	LID           *common.ID                     `json:"id,omitempty"`
@@ -40,7 +40,24 @@ type Resource struct {
 	Relationships map[string]common.Relationship `json:"relationships,omitempty"`
 }
 
-// JSONAPIRequest top-level. Usually, you either have single resource or multiple resources in "data".
-type JSONAPIRequest struct {
-	Data *Resource `json:"data,omitempty"`
+// ListResource is a slice of Resource objects.
+type ListResource = []Resource
+
+
+// RequestType is a type constraint that allows either *Resource or ListResource.
+type RequestType interface {
+	~*Resource | ~ListResource
+}
+
+
+// Header is a map of HTTP headers.
+type Header map[string][]string
+
+// JSONAPIRequest is the top-level request structure, containing either a single resource or multiple resources in "data".
+type JSONAPIRequest[T RequestType] struct {
+	Path   string `json:"-"`
+	Method string `json:"-"`
+	Body   T      `json:"data"`
+	Query  *Query `json:"-"`
+	Header Header `json:"-"`
 }
