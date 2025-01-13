@@ -3,8 +3,8 @@ package http
 import (
 	"net/http"
 	"encoding/json"
-	jerror "github.com/midil-labs/core/shared/dtos/error"
-	"github.com/midil-labs/core/shared/dtos/response"
+	jerror "github.com/midil-labs/core/shared/jsonapi/error"
+	"github.com/midil-labs/core/shared/jsonapi/response"
 )
 
 // ResponseWriter is a type alias for a function that takes an http.ResponseWriter

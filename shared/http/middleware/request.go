@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/midil-labs/core/shared/dtos/request"
-	"github.com/midil-labs/core/shared/dtos/error"
+	"github.com/midil-labs/core/shared/jsonapi/request"
+	"github.com/midil-labs/core/shared/jsonapi/error"
     jhttp "github.com/midil-labs/core/shared/http"
 
 )
@@ -18,7 +18,7 @@ const JSONAPIRequestContextKey contextKey = "JSONAPIREQUESTCONTEXT"
 func WithJSONAPIContext[T request.RequestType](validateFunc func(request.JSONAPIRequest[T]) []error.ErrorObject) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			jsonAPIRequest := request.NewHTTPRequest[T](r)
+			jsonAPIRequest := jhttp.NewHTTPRequest[T](r)
 			if validateFunc != nil {
 				if err := validateFunc(jsonAPIRequest); err != nil {
                     response := *error.NewJSONAPIError(nil, err...)

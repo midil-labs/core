@@ -1,6 +1,6 @@
 package response
 
-import "github.com/midil-labs/core/shared/dtos/common"
+import "github.com/midil-labs/core/shared/jsonapi/common"
 
 
 type ResponseOption[T DataType] common.Option[JSONAPIResponse[T]]

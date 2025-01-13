@@ -1,7 +1,7 @@
 package request
 
 import (
-	"github.com/midil-labs/core/shared/dtos/common"
+	"github.com/midil-labs/core/shared/jsonapi/common"
 	"net/http"
 )
 

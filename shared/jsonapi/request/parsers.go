@@ -1,7 +1,6 @@
 package request
 
 import (
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
