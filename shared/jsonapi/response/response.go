@@ -7,8 +7,7 @@ package response
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/midil-labs/core/shared/dtos/common"
+	"github.com/midil-labs/core/shared/jsonapi/common"
 )
 
 func NewResource(id, resourceType string, attributes map[string]interface{}, opts ...ResourceOption) *Resource {

@@ -1,7 +1,9 @@
 package request
 
 import (
+	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/midil-labs/core/shared/jsonapi/common"
 	"github.com/midil-labs/core/shared/utils/goutils"
@@ -135,30 +137,29 @@ func WithToManyRelationshipFromMap[T RequestType](name string, resources []map[s
 }
 
 
-func WithQuery[T RequestType](req *http.Request) RequestOption[T] {
+func WithQuery[T RequestType](query map[string][]string) RequestOption[T] {
 	return func(r *JSONAPIRequest[T]) {
 		if r.Query == nil {
 			r.Query = &Query{}
 		}
-		query := ParseQueryParams(req.URL.Query())
+		query := ParseQueryParams(query)
 		r.Query = &query
 	}
 }
 
-func WithHeaders[T RequestType](req *http.Request) RequestOption[T] {
+func WithHeaders[T RequestType](header map[string][]string) RequestOption[T] {
 	return func(r *JSONAPIRequest[T]) {
 		if r.Header == nil {
 			r.Header = make(map[string][]string)
 		}
-		for k, v := range req.Header {
+		for k, v := range header {
 			r.Header[k] = v
 		}
 	}
 }
 
-func WithBody[T RequestType](req *http.Request) RequestOption[T] {
+func WithBody[T RequestType](body io.Reader) RequestOption[T] {
 	return func(r *JSONAPIRequest[T]) {
-		body := req.Body
 		parsedBody, err := ParseBody[T](body)
 		if err != nil {
 			panic(err)

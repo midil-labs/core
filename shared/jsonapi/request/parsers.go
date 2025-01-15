@@ -46,11 +46,12 @@ func ParseSort(values url.Values) Sort {
 }
 
 // ParsePagination parses "page[size]" and "page[number]" query parameters and returns a PaginationQuery.
-// Defaults: PageSize=100, PageNumber=1
+// Defaults: Page{Size: 100, Number: 1}
+// Example: "?page[size]=10&page[number]=2" => PaginationQuery{Size: 10, Number: 2}
 func ParsePagination(values url.Values) Page {
 	pagination := Page{
-		Size:   100, // default page size
-		Number: 1,   // default page number
+		Size:   MaximumPaginationSize,
+		Number: DefaultPageNumber,
 	}
 
 	if pageSizeStr := values.Get("page[size]"); pageSizeStr != "" {

@@ -22,3 +22,9 @@ func StructToMap(obj interface{}) (newMap map[string]interface{}, err error) {
 	err = json.Unmarshal(data, &newMap)
 	return
 }
+
+
+func GetValueFromKey[V any](m map[string]V, key string) (V, bool) {
+    value, exists := m[key]
+    return value, exists
+}
