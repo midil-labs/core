@@ -1,18 +1,17 @@
 package common
 
-type Option[T any] func(*T)
+import "github.com/midil-labs/core/shared/utils/goutils"
 
 // MetaOption is a function that applies a configuration to a NonStandardMeta.
-type MetaOption = Option[NonStandardMeta]
+type MetaOption = goutils.Option[NonStandardMeta]
 
 // Option is a function that applies a configuration to a Relationship.
-type RelationshipOption = Option[Relationship]
+type RelationshipOption = goutils.Option[Relationship]
 
 // RelatedLinkOption is a function that applies a configuration to a RelatedLink.
-type RelatedLinkOption = Option[RelatedLink]
+type RelatedLinkOption = goutils.Option[RelatedLink]
 
-type LinksOption = Option[Links]
-
+type LinksOption = goutils.Option[Links]
 
 func WithRelatedMetadata(meta NonStandardMeta) RelationshipOption {
 	return func(r *Relationship) {

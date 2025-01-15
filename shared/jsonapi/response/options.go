@@ -1,13 +1,14 @@
 package response
 
-import "github.com/midil-labs/core/shared/jsonapi/common"
+import (
+	"github.com/midil-labs/core/shared/jsonapi/common"
+	"github.com/midil-labs/core/shared/utils/goutils"
+)
 
+type ResponseOption[T DataType] goutils.Option[JSONAPIResponse[T]]
+type ResourceOption goutils.Option[Resource]
 
-type ResponseOption[T DataType] common.Option[JSONAPIResponse[T]]
-type ResourceOption common.Option[Resource]
-
-type ListResourceOption common.Option[JSONAPIResponse[ListResource]] // ListResource response option
-
+type ListResourceOption goutils.Option[JSONAPIResponse[ListResource]] // ListResource response option
 
 // WithMeta merges the provided `meta` into different places based on `scope`.
 // Valid scopes: "top", "resource", "relationship", "link".
@@ -18,21 +19,17 @@ func WithMeta[T DataType](meta map[string]any, scope Scope) ResponseOption[T] {
 		}
 
 		switch scope {
-		case ScopeTop:
-			if r.Meta == nil {
-				r.Meta = make(map[string]any)
-			}
-			for k, v := range meta {
-				r.Meta[k] = v
-			}
+		case ScopeTop:			
+			goutils.MergeMaps(r.Meta, meta)
 
 		case ScopeResource:
 			switch dataAny := any(r.Data).(type) {
 			case *Resource:
-				mergeResourceMeta(dataAny, meta)
+				dataAny.Meta = goutils.MergeMaps(dataAny.Meta, meta)
+				r.Data = any(dataAny).(T)
 			case ListResource:
 				for i := range dataAny {
-					mergeResourceMeta(dataAny[i], meta)
+					dataAny[i].Meta = goutils.MergeMaps(dataAny[i].Meta, meta)
 				}
 				r.Data = any(dataAny).(T)
 			}
@@ -51,17 +48,21 @@ func WithMeta[T DataType](meta map[string]any, scope Scope) ResponseOption[T] {
 		case ScopeLink:
 			switch dataAny := any(r.Data).(type) {
 			case *Resource:
-				mergeLinksMeta(dataAny, meta)
+				if dataAny.Links != nil && dataAny.Links.Related != nil {
+					dataAny.Links.Related.Meta = goutils.MergeMaps(dataAny.Links.Related.Meta, meta)
+				}
+				r.Data = any(dataAny).(T)
 			case ListResource:
 				for i := range dataAny {
-					mergeLinksMeta(dataAny[i], meta)
+					if dataAny[i].Links != nil && dataAny[i].Links.Related != nil {
+						dataAny[i].Links.Related.Meta = goutils.MergeMaps(dataAny[i].Links.Related.Meta, meta)
+					}
 				}
 				r.Data = any(dataAny).(T)
 			}
 		}
 	}
 }
-
 
 func WithToOneRelationship(
 	name, relType, relID string,
@@ -87,16 +88,15 @@ func WithToOneRelationship(
 }
 
 func WithRelationshipMeta(name string, meta common.NonStandardMeta) ResponseOption[*Resource] {
-    return func(resp *JSONAPIResponse[*Resource]) {
-        if resp.Data.Relationships == nil {
-            resp.Data.Relationships = make(map[string]Relationship)
-        }
-        resp.Data.Relationships[name] = Relationship{
-            Meta: meta,
-        }
-    }
+	return func(resp *JSONAPIResponse[*Resource]) {
+		if resp.Data.Relationships == nil {
+			resp.Data.Relationships = make(map[string]Relationship)
+		}
+		resp.Data.Relationships[name] = Relationship{
+			Meta: meta,
+		}
+	}
 }
-
 
 // WithToManyRelationship sets a to-many relationship on a single Resource response.
 func WithToManyRelationship(
@@ -131,19 +131,18 @@ func WithLinks(self string, related *common.RelatedLink) ResponseOption[*Resourc
 	}
 }
 
-
 // WithIncluded overwrites the `Included` slice with a new set of included resources.
 func WithNewIncludedResources[T DataType](included ListResource) ResponseOption[T] {
-    return func(rr *JSONAPIResponse[T]) {
-        rr.Included = included
-    }
+	return func(rr *JSONAPIResponse[T]) {
+		rr.Included = included
+	}
 }
 
 // WithIncludedResources appends included resources to the existing slice.
 func WithAppendIncludedResources[T DataType](resources ListResource) ResponseOption[T] {
-    return func(rr *JSONAPIResponse[T]) {
-        rr.Included = append(rr.Included, resources...)
-    }
+	return func(rr *JSONAPIResponse[T]) {
+		rr.Included = append(rr.Included, resources...)
+	}
 }
 
 // WithPagination sets a Pagination object inside `Meta["Pagination"]` for a multi-resource response.

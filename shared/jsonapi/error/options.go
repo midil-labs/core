@@ -2,12 +2,11 @@ package error
 
 import (
 	"encoding/json"
-
-	"github.com/midil-labs/core/shared/dtos/common"
+	"github.com/midil-labs/core/shared/utils/goutils"
 )
 
 type SerializationOption func(*json.Encoder)
-type Option common.Option[ErrorObject]
+type Option goutils.Option[ErrorObject]
 
 func WithID(id string) Option {
 	return func(e *ErrorObject) {

@@ -1,17 +1,19 @@
 package request
 
 import (
-	"github.com/midil-labs/core/shared/jsonapi/common"
 	"net/http"
+
+	"github.com/midil-labs/core/shared/jsonapi/common"
+	"github.com/midil-labs/core/shared/utils/goutils"
 )
 
-type QueryOption = common.Option[Query]
+type QueryOption = goutils.Option[Query]
 
-type RequestOption[T RequestType] common.Option[JSONAPIRequest[T]]
+type RequestOption[T RequestType] goutils.Option[JSONAPIRequest[T]]
 
-type ResourceOption  = common.Option[Resource]
+type ResourceOption  = goutils.Option[Resource]
 
-type BodyOption[T RequestType] common.Option[T]
+type BodyOption[T RequestType] goutils.Option[T]
 
 
 func WithFilter(key string, values ...string) QueryOption {
@@ -81,7 +83,7 @@ func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOptio
 			},
 		}
 
-		common.ApplyOptions(&relationship.Meta, opts...)
+		goutils.ApplyOptions(&relationship.Meta, opts...)
 
 		r.Relationships[name] = relationship
 	}
@@ -99,7 +101,7 @@ func WithToManyRelationship(name string, resources []common.ResourceIdentifier, 
 				Resource: nil,
 			},
 		}
-		common.ApplyOptions(&relationship.Meta, opts...)
+		goutils.ApplyOptions(&relationship.Meta, opts...)
 
 		r.Relationships[name] = relationship
 	}
@@ -126,7 +128,7 @@ func WithToManyRelationshipFromMap[T RequestType](name string, resources []map[s
 				Resources: resourceIdentifiers,
 			},
 		}
-		common.ApplyOptions(&relationship.Meta, opts...)
+		goutils.ApplyOptions(&relationship.Meta, opts...)
 
 		r.Relationships[name] = relationship
 	}

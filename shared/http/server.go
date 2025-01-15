@@ -1,8 +1,10 @@
 package http
 
 import (
-	"net/http"
 	"encoding/json"
+	"net/http"
+
+	"github.com/midil-labs/core/shared/jsonapi/common"
 	jerror "github.com/midil-labs/core/shared/jsonapi/error"
 	"github.com/midil-labs/core/shared/jsonapi/response"
 )
@@ -14,7 +16,7 @@ type ResponseWriter = func(w http.ResponseWriter) error
 
 // The provided code must be a valid HTTP 2xx status code.
 func Success[T response.DataType](w http.ResponseWriter, statusCode int, response response.JSONAPIResponse[T]) error {
-	w.Header().Set("Content-Type", "application/vnd.api+json; charset=utf-8")
+	w.Header().Set(common.HeaderContentType, common.ContentTypeJSONAPI)
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
 	return nil
@@ -22,7 +24,7 @@ func Success[T response.DataType](w http.ResponseWriter, statusCode int, respons
 
 // The provided status code must be a valid HTTP 4xx-5xx status code.
 func Error(w http.ResponseWriter, statusCode int, response jerror.JSONAPIError) error {
-	w.Header().Set("Content-Type", "application/vnd.api+json; charset=utf-8")
+	w.Header().Set(common.HeaderContentType, common.ContentTypeJSONAPI)
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
 	return nil

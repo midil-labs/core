@@ -2,7 +2,7 @@
 package error
 
 import (
-	"github.com/midil-labs/core/shared/dtos/common"
+	"github.com/midil-labs/core/shared/jsonapi/common"
 )
 
 // Supported languages for localization

@@ -19,9 +19,7 @@ func Heartbeat(endpoint string) func(http.Handler) http.Handler {
 			if (r.Method == "GET" || r.Method == "HEAD") && strings.EqualFold(r.URL.Path, endpoint) {
 				response := response.NewJsonAPIResponse(&response.Resource{})
 				jhttp.OK(*response)(w)
-				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("."))
 				return
 			}
 			h.ServeHTTP(w, r)

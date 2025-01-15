@@ -1,8 +1,7 @@
 package response
 
 import (
-	"github.com/midil-labs/core/shared/dtos/common"
-	error "github.com/midil-labs/core/shared/dtos/error"
+	"github.com/midil-labs/core/shared/jsonapi/common"
 )
 
 // PaginationLinks is a map of pagination links for the response. The keys are the link relation type.

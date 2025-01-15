@@ -2,8 +2,7 @@ package response
 
 import (
 	"fmt"
-
-	"github.com/midil-labs/core/shared/dtos/common"
+	"github.com/midil-labs/core/shared/jsonapi/common"
 )
 
 type Scope string
