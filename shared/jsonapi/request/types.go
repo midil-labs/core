@@ -31,8 +31,8 @@ type Query struct {
 	Include Include `json:"include,omitempty"`
 }
 
-// Resource is a JSON:API resource object for inbound requests.
-type Resource struct {
+// Body is a JSON:API resource object for inbound requests.
+type Body struct {
 	common.ResourceIdentifier
 	LID           *common.ID                     `json:"id,omitempty"`
 	Attributes    map[string]interface{}         `json:"attributes,omitempty"`
@@ -40,20 +40,18 @@ type Resource struct {
 }
 
 // ListResource is a slice of Resource objects.
-type ListResource = []Resource
+type ListBody = []*Body
 
-
-// RequestType is a type constraint that allows either *Resource or ListResource.
-type RequestType interface {
-	~*Resource | ~ListResource
+// Request BodyType is a type constraint that allows either *Resource or ListResource.
+type BodyType interface {
+	~*Body | ~ListBody
 }
-
 
 // Header is a map of HTTP headers.
 type Header map[string][]string
 
 // JSONAPIRequest is the top-level request structure, containing either a single resource or multiple resources in "data".
-type JSONAPIRequest[T RequestType] struct {
+type JSONAPIRequest[T BodyType] struct {
 	Path   string `json:"-"`
 	Method string `json:"-"`
 	Body   T      `json:"data"`

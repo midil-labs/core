@@ -5,14 +5,12 @@
 package response
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/midil-labs/core/shared/jsonapi/common"
 )
 
-func NewResource(id, resourceType string, attributes map[string]interface{}, opts ...ResourceOption) *Resource {
+func NewData(id, resourceType string, attributes map[string]interface{}, opts ...ResourceOption) *Data {
 	id = common.ID(id)
-	resource := &Resource{
+	resource := &Data{
 		ResourceIdentifier: common.ResourceIdentifier{ID: &id, Type: resourceType},
 		Attributes:         attributes,
 	}
@@ -28,27 +26,4 @@ func NewJsonAPIResponse[T DataType](data T, opts ...ResponseOption[T]) *JSONAPIR
 		opt(builder)
 	}
 	return builder
-}
-
-func (c *RelationshipData) UnmarshalJSON(b []byte) error {
-	var resource common.ResourceIdentifier
-	if err := json.Unmarshal(b, &resource); err == nil && resource.ID != nil && *resource.ID != "" {
-		c.Resource = &resource
-		return nil
-	}
-
-	var resources []common.ResourceIdentifier
-	if err := json.Unmarshal(b, &resources); err == nil {
-		c.Resources = resources
-		return nil
-	}
-
-	return fmt.Errorf("data field is neither a resource object nor a valid array of objects")
-}
-
-func (c RelationshipData) MarshalJSON() ([]byte, error) {
-	if c.Resource != nil {
-		return json.Marshal(c.Resource)
-	}
-	return json.Marshal(c.Resources)
 }

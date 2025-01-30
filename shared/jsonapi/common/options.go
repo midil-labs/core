@@ -1,6 +1,9 @@
 package common
 
-import "github.com/midil-labs/core/shared/utils/goutils"
+import ("github.com/midil-labs/core/shared/utils/goutils"
+		 "encoding/json"
+		"fmt")
+
 
 // MetaOption is a function that applies a configuration to a NonStandardMeta.
 type MetaOption = goutils.Option[NonStandardMeta]
@@ -41,7 +44,7 @@ func WithToOneRelationship(name, relType string, relID *string, opts ...Relation
 	}
 }
 
-func WithToManyRelationship(name string, resources []ResourceIdentifier, opts ...RelationshipOption) RelationshipOption {
+func WithToManyRelationship(name string, resources []*ResourceIdentifier, opts ...RelationshipOption) RelationshipOption {
 	return func(r *Relationship) {
 		r.Data.Resources = append(r.Data.Resources, resources...)
 		r.ApplyOptions(opts...)
@@ -56,4 +59,27 @@ func WithRelatedLink(href, title, describedBy string, meta NonStandardMeta) Link
 		rl.Related.DescribedBy = describedBy
 		rl.Related.Meta = meta
 	}
+}
+
+func (c *RelationshipData) UnmarshalJSON(b []byte) error {
+	var resource ResourceIdentifier
+	if err := json.Unmarshal(b, &resource); err == nil && resource.ID != nil && *resource.ID != "" {
+		c.Resource = &resource
+		return nil
+	}
+
+	var resources []*ResourceIdentifier
+	if err := json.Unmarshal(b, &resources); err == nil {
+		c.Resources = resources
+		return nil
+	}
+
+	return fmt.Errorf("data field is neither a resource object nor a valid array of objects")
+}
+
+func (c RelationshipData) MarshalJSON() ([]byte, error) {
+	if c.Resource != nil {
+		return json.Marshal(c.Resource)
+	}
+	return json.Marshal(c.Resources)
 }

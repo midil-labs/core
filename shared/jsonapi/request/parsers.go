@@ -1,14 +1,14 @@
 package request
 
 import (
+	"encoding/json"
+	"errors"
+	// "fmt"
+	"io"
 	"net/url"
 	"strconv"
 	"strings"
-	"encoding/json"
-	"io"
-	"errors"
 )
-
 
 // ParseFilter parses query parameters of the form filter[foo]=bar and returns a Filter.
 func ParseFilter(values url.Values) Filter {
@@ -128,19 +128,27 @@ func ParseQueryParams(values url.Values) Query {
 }
 
 // ParseBody decodes an io.Reader into a struct of type T and returns it.
-func ParseBody[T RequestType](body io.Reader) (T, error) {
-	var parsedBody T
+
+func ParseBody[T BodyType](body io.Reader) (T, error) {
+
+	var req struct {
+		Data T `json:"data"`
+	}
 
 	decoder := json.NewDecoder(body)
 	decoder.DisallowUnknownFields()
 
-	if err := decoder.Decode(&parsedBody); err != nil {
-		return parsedBody, err
+	if err := decoder.Decode(&req); err != nil {
+		var zeroValue T
+		return zeroValue, err
 	}
 
 	// Ensure there's no extra data after the JSON object
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		return parsedBody, errors.New("unexpected data after JSON object")
+		var zeroValue T
+		return zeroValue, errors.New("unexpected data after JSON object")
 	}
-	return parsedBody, nil
+
+	return req.Data, nil
 }
+

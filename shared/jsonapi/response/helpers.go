@@ -26,7 +26,7 @@ func (s Scope) IsValid() bool {
 var ErrInvalidScope = fmt.Errorf("invalid scope")
 
 // Helper function to merge meta into a single Resource's Meta.
-func mergeResourceMeta(r *Resource, meta map[string]any) {
+func mergeResourceMeta(r *Data, meta map[string]any) {
 	if r.Meta == nil {
 		r.Meta = make(map[string]any)
 	}
@@ -36,7 +36,7 @@ func mergeResourceMeta(r *Resource, meta map[string]any) {
 }
 
 // Helper function to merge meta into all relationships in a single Resource.
-func mergeRelationshipMeta(r *Resource, meta map[string]any) {
+func mergeRelationshipMeta(r *Data, meta map[string]any) {
 	if r.Relationships == nil {
 		return
 	}
@@ -53,7 +53,7 @@ func mergeRelationshipMeta(r *Resource, meta map[string]any) {
 
 // Helper function to merge meta into a Resource's Links.
 // If a Resource has no Links, we create an empty one.
-func mergeLinksMeta(r *Resource, meta map[string]any) {
+func mergeLinksMeta(r *Data, meta map[string]any) {
 	if r.Links == nil {
 		r.Links = &common.Links{}
 	}

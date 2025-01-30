@@ -25,6 +25,9 @@ type ErrorObject struct {
 	localizer map[Language]Localization `json:"-"`
 }
 
+
+type ErrorObjects = []*ErrorObject
+
 // ErrorLinks contains reference links related to the error
 type ErrorLinks struct {
 	About string `json:"about,omitempty" validate:"omitempty,url"`
@@ -45,7 +48,7 @@ type Localization struct {
 }
 
 type JSONAPIError struct {
-	Errors []ErrorObject          `json:"errors" validate:"required"`
+	Errors []*ErrorObject          `json:"errors" validate:"required"`
 	Meta   common.NonStandardMeta `json:"meta,omitempty"`
 }
 

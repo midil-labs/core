@@ -2,32 +2,27 @@ package request
 
 import (
 	"io"
-	"net/http"
-	"net/url"
-
+	"fmt"
 	"github.com/midil-labs/core/shared/jsonapi/common"
 	"github.com/midil-labs/core/shared/utils/goutils"
 )
 
 type QueryOption = goutils.Option[Query]
 
-type RequestOption[T RequestType] goutils.Option[JSONAPIRequest[T]]
+type RequestOption[T BodyType] goutils.Option[JSONAPIRequest[T]]
 
-type ResourceOption  = goutils.Option[Resource]
+type BodyOption = goutils.Option[Body]
 
-type BodyOption[T RequestType] goutils.Option[T]
-
+type BodyTypeOption[T BodyType] goutils.Option[T]
 
 func WithFilter(key string, values ...string) QueryOption {
-    return func(q *Query) {
-        if q.Filter == nil {
-            q.Filter = make(Filter)
-        }
-        q.Filter[key] = append(q.Filter[key], values...)
-    }
+	return func(q *Query) {
+		if q.Filter == nil {
+			q.Filter = make(Filter)
+		}
+		q.Filter[key] = append(q.Filter[key], values...)
+	}
 }
-
-
 
 // WithSort adds sorting criteria to the query.
 func WithSort(fields []string) QueryOption {
@@ -36,7 +31,6 @@ func WithSort(fields []string) QueryOption {
 	}
 }
 
-
 // WithFields adds sparse fieldsets to the query.
 func WithFields(key string, value ...string) QueryOption {
 	return func(q *Query) {
@@ -44,14 +38,12 @@ func WithFields(key string, value ...string) QueryOption {
 	}
 }
 
-
 // WithInclude adds relationships to include in the response.
 func WithInclude(fields ...string) QueryOption {
-    return func(q *Query) {
-        q.Include = append(q.Include, fields...)
-    }
+	return func(q *Query) {
+		q.Include = append(q.Include, fields...)
+	}
 }
-
 
 func WithPagination(pageSize, pageNumber int) QueryOption {
 	return func(q *Query) {
@@ -62,15 +54,15 @@ func WithPagination(pageSize, pageNumber int) QueryOption {
 
 // WithLID sets the LID field on the Resource.
 // It takes a string and assigns it to the LID field after converting it to common.ID.
-func WithLID(lid string) ResourceOption {
-    return func(r *Resource) {
-        id := common.ID(lid)
-        r.LID = &id
-    }
+func WithLID(lid string) BodyOption {
+	return func(r *Body) {
+		id := common.ID(lid)
+		r.LID = &id
+	}
 }
 
-func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOption) ResourceOption {
-	return func(r *Resource) {
+func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOption) BodyOption {
+	return func(r *Body) {
 		if r.Relationships == nil {
 			r.Relationships = make(map[string]common.Relationship)
 		}
@@ -91,16 +83,15 @@ func WithToOneRelationship(name, relType, relID string, opts ...common.MetaOptio
 	}
 }
 
-
-func WithToManyRelationship(name string, resources []common.ResourceIdentifier, opts ...common.MetaOption) ResourceOption {
-	return func(r *Resource) {
+func WithToManyRelationship(name string, resources []*common.ResourceIdentifier, opts ...common.MetaOption) BodyOption {
+	return func(r *Body) {
 		if r.Relationships == nil {
 			r.Relationships = make(map[string]common.Relationship)
 		}
 		relationship := common.Relationship{
 			Data: common.RelationshipData{
 				Resources: resources,
-				Resource: nil,
+				Resource:  nil,
 			},
 		}
 		goutils.ApplyOptions(&relationship.Meta, opts...)
@@ -109,17 +100,16 @@ func WithToManyRelationship(name string, resources []common.ResourceIdentifier, 
 	}
 }
 
-
-func WithToManyRelationshipFromMap[T RequestType](name string, resources []map[string]string, opts ...common.MetaOption) ResourceOption {
-	return func(r *Resource) {
+func WithToManyRelationshipFromMap[T BodyType](name string, resources []map[string]string, opts ...common.MetaOption) BodyOption {
+	return func(r *Body) {
 		if r.Relationships == nil {
 			r.Relationships = make(map[string]common.Relationship)
 		}
 
-		var resourceIdentifiers []common.ResourceIdentifier
+		var resourceIdentifiers []*common.ResourceIdentifier
 		for _, res := range resources {
 			id := res["id"]
-			resourceIdentifiers = append(resourceIdentifiers, common.ResourceIdentifier{
+			resourceIdentifiers = append(resourceIdentifiers, &common.ResourceIdentifier{
 				Type: res["type"],
 				ID:   &id,
 			})
@@ -136,8 +126,7 @@ func WithToManyRelationshipFromMap[T RequestType](name string, resources []map[s
 	}
 }
 
-
-func WithQuery[T RequestType](query map[string][]string) RequestOption[T] {
+func WithQuery[T BodyType](query map[string][]string) RequestOption[T] {
 	return func(r *JSONAPIRequest[T]) {
 		if r.Query == nil {
 			r.Query = &Query{}
@@ -147,7 +136,7 @@ func WithQuery[T RequestType](query map[string][]string) RequestOption[T] {
 	}
 }
 
-func WithHeaders[T RequestType](header map[string][]string) RequestOption[T] {
+func WithHeaders[T BodyType](header map[string][]string) RequestOption[T] {
 	return func(r *JSONAPIRequest[T]) {
 		if r.Header == nil {
 			r.Header = make(map[string][]string)
@@ -158,11 +147,12 @@ func WithHeaders[T RequestType](header map[string][]string) RequestOption[T] {
 	}
 }
 
-func WithBody[T RequestType](body io.Reader) RequestOption[T] {
+func WithBody[T BodyType](body io.Reader) RequestOption[T] {
 	return func(r *JSONAPIRequest[T]) {
 		parsedBody, err := ParseBody[T](body)
+		fmt.Println("Body ->", &parsedBody)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 		r.Body = parsedBody
 	}

@@ -6,12 +6,13 @@ import (
 )
 
 
-func NewHTTPRequest[T request.RequestType](r *http.Request) request.JSONAPIRequest[T] {
+func NewHTTPRequest[T request.BodyType](r *http.Request) request.JSONAPIRequest[T] {
 
-	req := request.NewJSONAPIRequest[T](r.URL.Path, r.Method,
+	req := request.NewJSONAPIRequest[T](
+		r.URL.Path, r.Method,
 		request.WithQuery[T](r.URL.Query()),
 		request.WithHeaders[T](r.Header),
-		// WithBody[T](r),
+		request.WithBody[T](r.Body),
 	)
 
 	return req

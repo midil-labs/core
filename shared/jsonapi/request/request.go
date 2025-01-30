@@ -1,6 +1,6 @@
 package request
 
-func NewJSONAPIRequest[T RequestType](path string, method string, opts ...RequestOption[T]) JSONAPIRequest[T] {
+func NewJSONAPIRequest[T BodyType](path string, method string, opts ...RequestOption[T]) JSONAPIRequest[T] {
 	req := JSONAPIRequest[T]{
 		Path:   path,
 		Method: method,

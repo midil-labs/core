@@ -21,39 +21,28 @@ type Pagination struct {
 	TotalCount  int64 `json:"total_count"`
 }
 
-// Resource is a JSON:API resource object. It contains the resource identifier, attributes, relationships, links, and meta-information.
+// Data is a JSON:API resource object. It contains the resource identifier, attributes, relationships, links, and meta-information.
 // The attributes field is an interface{} type to allow for any type of data to be passed in.
 // The relationships field is a map of relationship objects.
 // The links field is a map of links objects.
 // The meta field is a map of non-standard meta-information.
-type Resource struct {
+type Data struct {
 	common.ResourceIdentifier
-	Attributes    map[string]interface{}  `json:"attributes,omitempty"`
-	Relationships map[string]Relationship `json:"relationships,omitempty"`
-	Links         *common.Links           `json:"links,omitempty"`
-	Meta          common.NonStandardMeta  `json:"meta,omitempty"`
+	Attributes    map[string]interface{}          `json:"attributes,omitempty"`
+	Relationships map[string]*common.Relationship `json:"relationships,omitempty"`
+	Links         *common.Links                   `json:"links,omitempty"`
+	Meta          common.NonStandardMeta          `json:"meta,omitempty"`
 }
 
-type RelationshipData struct {
-	Resource  *common.ResourceIdentifier
-	Resources []common.ResourceIdentifier
-}
-
-type Relationship struct {
-	Data  RelationshipData       `json:"data"`
-	Links *common.Links          `json:"links,omitempty"`
-	Meta  common.NonStandardMeta `json:"meta,omitempty"`
-}
-
-type ListResource = []*Resource
+type ListData = []*Data
 
 type DataType interface {
-	~*Resource | ~ListResource
+	~*Data | ~ListData
 }
 
 type JSONAPIResponse[T DataType] struct {
 	Data     T                      `json:"data"`
 	Meta     common.NonStandardMeta `json:"meta,omitempty"`
 	Links    *PaginationLinks       `json:"links,omitempty"`
-	Included []*Resource            `json:"included,omitempty"`
+	Included ListData               `json:"included,omitempty"`
 }

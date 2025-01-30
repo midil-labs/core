@@ -95,15 +95,15 @@ func (r *JSONAPIError) UnmarshalJSON(data []byte) error {
 	return r.Validate()
 }
 
-func NewJSONAPIError(meta map[string]interface{}, errs ...ErrorObject) *JSONAPIError {
+func NewJSONAPIError(meta map[string]interface{}, errs ...*ErrorObject) *JSONAPIError {
 	return &JSONAPIError{
 		Errors: errs,
 		Meta:   meta,
 	}
 }
 
-func (j *JSONAPIError) FilterByCodePrefix(prefix string) []ErrorObject {
-	var filtered []ErrorObject
+func (j *JSONAPIError) FilterByCodePrefix(prefix string) ErrorObjects {
+	var filtered ErrorObjects
 	for _, err := range j.Errors {
 		if strings.HasPrefix(string(err.Code), prefix) {
 			filtered = append(filtered, err)
@@ -112,7 +112,7 @@ func (j *JSONAPIError) FilterByCodePrefix(prefix string) []ErrorObject {
 	return filtered
 }
 
-func (j *JSONAPIError) AddError(err ErrorObject) *JSONAPIError {
+func (j *JSONAPIError) AddError(err *ErrorObject) *JSONAPIError {
 	j.Errors = append(j.Errors, err)
 	return j
 }

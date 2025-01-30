@@ -18,7 +18,7 @@ type NonStandardMeta map[string]interface{}
 // RelationshipData holds either one or many ResourceIdentifiers.
 type RelationshipData struct {
 	Resource  *ResourceIdentifier  `json:"resource,omitempty"`
-	Resources []ResourceIdentifier `json:"resources,omitempty"`
+	Resources []*ResourceIdentifier `json:"resources,omitempty"`
 }
 
 type RelatedLink struct {
