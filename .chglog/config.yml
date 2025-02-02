@@ -1,0 +1,22 @@
+style: github
+template: CHANGELOG.tpl.md
+info:
+  title: Changelog
+  repository_url: https://github.com/midil-labs/core
+options:
+  commit_groups:
+    title_maps:
+      features: Features
+      feat: Features
+      fix: Bug Fixes
+      improvements: Improvements
+      improvement: Improvements
+      perf: Improvements
+      refactor: Improvements
+
+  header:
+    pattern: "^(\\w*)(?:\\(([\\w\\$\\.\\-\\* ]*)\\))?\\: (.*)$"
+    pattern_maps:
+      - Type
+      - Scope
+      - Subject
