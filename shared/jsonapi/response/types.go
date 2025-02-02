@@ -34,6 +34,38 @@ type Data struct {
 	Meta          common.NonStandardMeta          `json:"meta,omitempty"`
 }
 
+// example of Data
+// Data{
+// 	ResourceIdentifier: common.ResourceIdentifier{
+// 		Type: "users",
+// 		ID:   "1",
+// 	},
+// 	Attributes: map[string]interface{}{
+// 		"name": "John Doe",
+// 		"email": "
+// 	},
+// 	Relationships: map[string]*common.Relationship{
+// 		"articles": &common.Relationship{
+// 			Links: &common.Links{
+// 				Self: "/users/1/relationships/articles",
+// 				Related: "/users/1/articles",
+// 			},
+// 			Data: []*common.ResourceIdentifier{
+// 				&common.ResourceIdentifier{
+// 					Type: "articles",
+// 					ID:   "1",
+// 				},
+// 				&common.ResourceIdentifier{
+// 					Type: "articles",
+// 					ID:   "2",
+// 				},
+// 			},
+// 		},
+// 	},
+// 	Links: &common.Links{
+// 		Self: "/users/1",
+// 	},
+
 type ListData = []*Data
 
 type DataType interface {

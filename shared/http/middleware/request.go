@@ -28,7 +28,7 @@ func WithJSONAPIContext[T request.BodyType](callback func(request.JSONAPIRequest
 			if callback != nil {
 				if callbackErr := callback(jsonAPIRequest); callbackErr != nil {
 					response := jsonapierror.NewJSONAPIError(nil, callbackErr...)
-					httppkg.UnprocessableEntity(*response)(w)
+					httppkg.UnprocessableEntity(*response)
 					return
 				}
 			}

@@ -149,19 +149,83 @@ var ErrorMessages = map[ErrCode]ErrorMessage{
 		ES: "Recurso no encontrado",
 		FR: "Ressource non trouvée",
 	},
-
+	CodeAlreadyExists: {
+		EN: "Resource already exists",
+		ES: "El recurso ya existe",
+		FR: "La ressource existe déjà",
+	},
+	CodeConflict: {
+		EN: "Resource conflict",
+		ES: "Conflicto de recursos",
+		FR: "Conflit de ressources",
+	},
+	CodeGone: {
+		EN: "Resource is gone",
+		ES: "El recurso ha desaparecido",
+		FR: "La ressource a disparu",
+	},
+	CodeLocked: {
+		EN: "Resource is locked",
+		ES: "El recurso está bloqueado",
+		FR: "La ressource est verrouillée",
+	},
 	// --- Business Logic Errors ---
 	CodeQuotaExceeded: {
 		EN: "Quota exceeded",
 		ES: "Cuota excedida",
 		FR: "Quota dépassé",
 	},
-
+	CodeRateLimitExceeded: {
+		EN: "Rate limit exceeded",
+		ES: "Límite de velocidad excedido",
+		FR: "Limite de taux dépassé",
+	},
+	CodeInvalidState: {
+		EN: "Invalid state",
+		ES: "Estado inválido",
+		FR: "État invalide",
+	},
+	CodeDependencyConflict: {
+		EN: "Dependency conflict",
+		ES: "Conflicto de dependencia",
+		FR: "Conflit de dépendance",
+	},
+	CodeBusinessRuleViolation: {
+		EN: "Business rule violation",
+		ES: "Violación de reglas de negocio",
+		FR: "Violation de règle métier",
+	},
 	// --- Server Errors ---
 	CodeInternalError: {
 		EN: "Internal server error",
 		ES: "Error interno del servidor",
 		FR: "Erreur interne du serveur",
+	},
+	CodeDatabaseError: {
+		EN: "Database error",
+		ES: "Error de base de datos",
+		FR: "Erreur de base de données",
+	},
+	CodeNetworkError: {
+		EN: "Network error",
+		ES: "Error de red",
+		FR: "Erreur réseau",
+	},
+	CodeServiceUnavailable: {
+		EN: "Service unavailable",
+		ES: "Servicio no disponible",
+		FR: "Service indisponible",
+	},
+	CodeTimeout: {
+		EN: "Request timeout",
+		ES: "Tiempo de espera agotado",
+		FR: "Délai d'attente dépassé",
+	},
+	// --- Unknown Errors ---
+	CodeUnknownError: {
+		EN: "Unknown error",
+		ES: "Error desconocido",
+		FR: "Erreur inconnue",
 	},
 }
 

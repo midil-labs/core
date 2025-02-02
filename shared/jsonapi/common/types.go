@@ -8,7 +8,7 @@ type Type = string
 
 // ResourceIdentifier is a JSON:API resource identifier object.
 type ResourceIdentifier struct {
-	ID   *ID  `json:"id"`
+	ID   *ID  `json:"id,omitempty"`
 	Type Type `json:"type" required:"true"`
 }
 
