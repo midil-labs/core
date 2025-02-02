@@ -3,7 +3,7 @@ package middleware
 import (
 	"strings"
 	"net/http"
-	jhttp "github.com/midil-labs/core/shared/http"
+	httppkg "github.com/midil-labs/core/shared/http"
 	"github.com/midil-labs/core/shared/jsonapi/response"
 
 )
@@ -18,7 +18,7 @@ func Heartbeat(endpoint string) func(http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			if (r.Method == "GET" || r.Method == "HEAD") && strings.EqualFold(r.URL.Path, endpoint) {
 				response := response.NewJsonAPIResponse[*response.Data](nil)
-				jhttp.OK(*response)(w)
+				httppkg.OK(*response)(w)
 				return
 			}
 			h.ServeHTTP(w, r)

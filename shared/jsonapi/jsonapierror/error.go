@@ -1,10 +1,22 @@
-package error
+// Package jsonapierror provides a standardized way to handle and communicate errors
+// in JSON API responses. It includes predefined error codes, HTTP status mappings,
+// and multilingual error messages for consistent error handling across the application.
+//
+// Key Features:
+// - Predefined error codes for common scenarios (e.g., authentication, validation, resources).
+// - Mapping of error codes to appropriate HTTP status codes.
+// - Support for multilingual error messages (e.g., English, Spanish, French).
+// - Easy-to-use functions for retrieving HTTP status codes and error messages.
+
+
+package jsonapierror
 
 import (
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+	"net/http"
 )
 
 func New(status int, code ErrCode, title, detail string, opts ...Option) *ErrorObject {
@@ -21,6 +33,16 @@ func New(status int, code ErrCode, title, detail string, opts ...Option) *ErrorO
 
 	return err
 }
+
+func NewAppError(code ErrCode, details string, lang Language) *ErrorObject {
+	return &ErrorObject{
+		Code:   code,
+		Title:  GetErrorMessage(code, lang),
+		Detail: details,
+		Status: strconv.Itoa(GetHTTPStatus(code)),
+	}
+}
+
 
 func (e *ErrorObject) Error() string {
 	return fmt.Sprintf("[%s] %s: %s", e.Status, e.Title, e.Detail)
@@ -39,6 +61,31 @@ func (e *ErrorObject) GetLocalizedError(lang Language) *ErrorObject {
 	}
 	return e
 }
+
+// GetHTTPStatus returns the HTTP status code for a given error code.
+func GetHTTPStatus(code ErrCode) int {
+	if status, exists := ErrorCodeToHTTPStatus[code]; exists {
+		return status
+	}
+
+	return http.StatusInternalServerError
+}
+
+// GetErrorMessage returns the error message for a given error code and language.
+func GetErrorMessage(code ErrCode, lang Language) string {
+	if msg, exists := ErrorMessages[code]; exists {
+		switch lang {
+		case EN:
+			return msg.EN
+		case ES:
+			return msg.ES
+		case FR:
+			return msg.FR
+		}
+	}
+	return "Internal server error" // Default message
+}
+
 
 func (e *ErrorObject) MarshalJSON() ([]byte, error) {
 	type Alias ErrorObject
@@ -112,7 +159,6 @@ func (j *JSONAPIError) FilterByCodePrefix(prefix string) ErrorObjects {
 	return filtered
 }
 
-func (j *JSONAPIError) AddError(err *ErrorObject) *JSONAPIError {
+func (j *JSONAPIError) AddError(err *ErrorObject) {
 	j.Errors = append(j.Errors, err)
-	return j
 }

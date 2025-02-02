@@ -1,5 +1,5 @@
 // types.go
-package error
+package jsonapierror
 
 import (
 	"github.com/midil-labs/core/shared/jsonapi/common"
@@ -25,7 +25,6 @@ type ErrorObject struct {
 	localizer map[Language]Localization `json:"-"`
 }
 
-
 type ErrorObjects = []*ErrorObject
 
 // ErrorLinks contains reference links related to the error
@@ -48,7 +47,6 @@ type Localization struct {
 }
 
 type JSONAPIError struct {
-	Errors []*ErrorObject          `json:"errors" validate:"required"`
+	Errors ErrorObjects           `json:"errors" validate:"required"`
 	Meta   common.NonStandardMeta `json:"meta,omitempty"`
 }
-

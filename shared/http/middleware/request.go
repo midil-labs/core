@@ -4,10 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	httppkg "github.com/midil-labs/core/shared/http"
+	"github.com/midil-labs/core/shared/jsonapi/jsonapierror"
 	"github.com/midil-labs/core/shared/jsonapi/request"
-	"github.com/midil-labs/core/shared/jsonapi/error"
-    jhttp "github.com/midil-labs/core/shared/http"
-
 )
 
 type contextKey string
@@ -15,17 +14,25 @@ type contextKey string
 // JSONAPIContextKey is the key used to store JSONAPIRequest in the request context.
 const JSONAPIRequestContextKey contextKey = "JSONAPIREQUESTCONTEXT"
 
-func WithJSONAPIContext[T request.BodyType](callback func(request.JSONAPIRequest[T]) error.ErrorObjects) func(http.Handler) http.Handler {
+func WithJSONAPIContext[T request.BodyType](callback func(request.JSONAPIRequest[T]) jsonapierror.ErrorObjects) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			jsonAPIRequest := jhttp.NewHTTPRequest[T](r)
+
+			jsonAPIRequest, errs := httppkg.NewHTTPRequest[T](r)
+			if len(errs) != 0 {
+				response := jsonapierror.NewJSONAPIError(nil, errs...)
+				httppkg.BadRequest(*response)(w)
+				return
+			}
+
 			if callback != nil {
-				if err := callback(jsonAPIRequest); err != nil {
-                    response := *error.NewJSONAPIError(nil, err...)
-                    jhttp.UnprocessableEntity(response)
+				if callbackErr := callback(jsonAPIRequest); callbackErr != nil {
+					response := jsonapierror.NewJSONAPIError(nil, callbackErr...)
+					httppkg.UnprocessableEntity(*response)(w)
 					return
 				}
 			}
+
 			ctx := context.WithValue(r.Context(), JSONAPIRequestContextKey, jsonAPIRequest)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)

@@ -1,7 +1,8 @@
-package error
+package jsonapierror
 
 import (
 	"encoding/json"
+
 	"github.com/midil-labs/core/shared/utils/goutils"
 )
 

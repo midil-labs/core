@@ -1,10 +1,9 @@
-package error
+package jsonapierror
 
 import (
 	"fmt"
 	"net/http"
 )
-
 
 // Authentication/Authorization Errors
 
@@ -96,17 +95,15 @@ func NewInsufficientPermissionError(detail string, opts ...Option) *ErrorObject 
 // 422 Unprocessable Entity: The format is correct, but the data is semantically invalid.
 // 400 Bad Request: The query parameters are invalid, and the server cannot process the request because it is malformed or includes invalid parameters.
 
-
 func NewValidationError(source ErrorSource, detail string, opts ...Option) *ErrorObject {
 	return New(
 		http.StatusUnprocessableEntity,
 		CodeValidationFailed,
 		"Validation Failed",
 		detail,
-		append(opts, WithSource(source.Pointer,source.Parameter,source.Header))...,
+		append(opts, WithSource(source.Pointer, source.Parameter, source.Header))...,
 	)
 }
-
 
 // NewInvalidFieldError creates a new ErrorObject representing an invalid field error.
 // It sets the HTTP status to 400 Bad Request and uses the CodeValidationFailed code.
@@ -129,7 +126,6 @@ func NewInvalidFieldError(pointer, detail string, opts ...Option) *ErrorObject {
 		append(opts, WithSource("/data/attributes/"+pointer, "", ""))...,
 	)
 }
-
 
 // NewUnprocessibleFieldError creates a new ErrorObject representing an unprocessible field error.
 // It sets the HTTP status to 422 Unprocessable Entity and uses the CodeValidationFailed code.
@@ -174,7 +170,6 @@ func NewInvalidQueryError(parameter, detail string, opts ...Option) *ErrorObject
 		append(opts, WithSource("", parameter, ""))...,
 	)
 }
-
 
 // NewUnprocessableQueryError creates a new ErrorObject representing an unprocessible query parameter error.
 // It sets the HTTP status to 422 Unprocessable Entity and uses the CodeValidationFailed code.

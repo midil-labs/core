@@ -2,18 +2,19 @@ package http
 
 import (
 	"net/http"
+
+	"github.com/midil-labs/core/shared/jsonapi/jsonapierror"
 	"github.com/midil-labs/core/shared/jsonapi/request"
 )
 
+func NewHTTPRequest[T request.BodyType](r *http.Request) (request.JSONAPIRequest[T], jsonapierror.ErrorObjects) {
 
-func NewHTTPRequest[T request.BodyType](r *http.Request) request.JSONAPIRequest[T] {
-
-	req := request.NewJSONAPIRequest[T](
+	req, errs := request.NewJSONAPIRequest[T](
 		r.URL.Path, r.Method,
 		request.WithQuery[T](r.URL.Query()),
 		request.WithHeaders[T](r.Header),
 		request.WithBody[T](r.Body),
 	)
 
-	return req
+	return req, errs
 }
